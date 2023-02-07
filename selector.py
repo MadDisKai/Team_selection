@@ -1,6 +1,5 @@
 import numpy as np
 import random
-import math
 
 
 class DNA:
@@ -44,7 +43,7 @@ class DNA:
 class GA:
     def __init__(self):
         self.count_of_individuals = 10
-        self.count_of_generations = 100
+        self.count_of_generations = 1000
         self.probability_of_mutation = 0.01
         self.data_matrix = np.array([5, 6, 3, 4, 5, 2, 3, 8, 4, 6, 3, 9, 15, 1, 7])
         self.desired_value = 15
@@ -72,8 +71,8 @@ class GA:
         self.function_matrix = []
         # print(self.data_matrix)
         for i in range(self.count_of_individuals):
-            self.function_matrix.append((self.parent_individual[i].chain * self.data_matrix).sum())
-        print(" [Function matrix]\n", self.function_matrix)
+            self.function_matrix.append((self.parent_individual[i].chain * self.data_matrix.copy()).sum())
+        # print(" [Function matrix]\n", self.function_matrix)
 
     def __calculate_fitness(self):
         self.fitness_matrix = []
@@ -89,7 +88,7 @@ class GA:
         for i in range(self.count_of_individuals):
             self.fitness_matrix[i] = self.fitness_matrix[i] / sum_fitness_matrix
         print(self.fitness_matrix)
-        print("[SUM]", sum(self.fitness_matrix))
+        # print("[SUM]", sum(self.fitness_matrix))
 
     def __gen_mutation(self):
         for i in range(self.count_of_individuals):
@@ -97,23 +96,24 @@ class GA:
 
     def __get_roulette_selected(self):
         random_value = random.random()
-        print("[Random value]", random_value)
+        # print("[Random value]", random_value)
         i = 0
         low_limit = 0
         high_limit = self.fitness_matrix[0]
         while i != self.count_of_individuals:
-            print("i: ", i, "[low limit]: ", low_limit, "[High limit]: ", high_limit)
+            # print("i: ", i, "[low limit]: ", low_limit, "[High limit]: ", high_limit)
             if (random_value > low_limit) and (random_value < high_limit):
                 return i
             i += 1
             low_limit = high_limit
             # ===========
             if i == 10:
-                print("i = 10");
+                print("i = 10")
                 input()
             high_limit += self.fitness_matrix[i]
 
     def __create_children(self):
+        self.__children_matrix = []
         for count in range(self.count_of_individuals // 2):
             i = self.__get_roulette_selected()
             j = self.__get_roulette_selected()
@@ -125,15 +125,30 @@ class GA:
             self.__children_matrix.append(two_children[0])
             self.__children_matrix.append(two_children[1])
         # for i in range(self.count_of_individuals):
-        # print(self.__children_matrix[i])
+            # print(self.__children_matrix[i].chain)
 
-    def solve(self):
+    def __children_to_parent(self):
+        self.parent_individual = []
+        for i in range(self.count_of_individuals):
+            self.parent_individual.append(self.__children_matrix[i])
+
+    def __run_generation(self):
         self.__calculate_function()
         self.__calculate_fitness()
-
         self.__gen_mutation()
+
+        print("[Parents matrix]")
+        self.print_dna_matrix()
+
         self.__create_children()
-        # self.print_dna_matrix()
-        # ===============================
-        # for i in range(10):
-        # print(self.__get_roulette_selected())
+        self.__children_to_parent()
+
+        for i in range(self.count_of_individuals):
+            print("[Individual # {}]   [Function]:{}   [Fitness]: {}".format(i, self.function_matrix[i], self.fitness_matrix[i]))
+        print("[Children matrix]")
+        self.print_dna_matrix()
+
+    def solve(self):
+        for generation in range(self.count_of_generations):
+            print("[Generation # {}]==============================================".format(generation))
+            self.__run_generation()
