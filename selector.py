@@ -45,7 +45,7 @@ class GA:
         self.count_of_individuals = 10
         self.count_of_generations = 1000
         self.probability_of_mutation = 0.01
-        self.data_matrix = np.array([5, 6, 3, 4, 5, 2, 3, 8, 4, 6, 3, 9, 15, 1, 7])
+        self.data_matrix = np.array([5, 6, 3, 4, 5, 2, 3, 8, 4, 6, 3, 9, 15, 1, 7, -3, -4])
         self.desired_value = 15
 
         self.count_of_genes = self.data_matrix.shape[0]
@@ -87,7 +87,7 @@ class GA:
         sum_fitness_matrix = sum(self.fitness_matrix)
         for i in range(self.count_of_individuals):
             self.fitness_matrix[i] = self.fitness_matrix[i] / sum_fitness_matrix
-        print(self.fitness_matrix)
+        # print(self.fitness_matrix)
         # print("[SUM]", sum(self.fitness_matrix))
 
     def __gen_mutation(self):
@@ -107,9 +107,9 @@ class GA:
             i += 1
             low_limit = high_limit
             # ===========
-            if i == 10:
-                print("i = 10")
-                input()
+            # if i == 10:
+                # print("i = 10")
+                # input()
             high_limit += self.fitness_matrix[i]
 
     def __create_children(self):
@@ -125,7 +125,7 @@ class GA:
             self.__children_matrix.append(two_children[0])
             self.__children_matrix.append(two_children[1])
         # for i in range(self.count_of_individuals):
-            # print(self.__children_matrix[i].chain)
+        # print(self.__children_matrix[i].chain)
 
     def __children_to_parent(self):
         self.parent_individual = []
@@ -137,18 +137,19 @@ class GA:
         self.__calculate_fitness()
         self.__gen_mutation()
 
-        print("[Parents matrix]")
-        self.print_dna_matrix()
-
+        # print("[Parents matrix]")
+        # self.print_dna_matrix()
+        for i in range(self.count_of_individuals):
+            print("[Individual # {}]   [Function]:{}   [Fitness]: {:.3f}   [DNA Chain]: {}".format(i,
+                                                                             self.function_matrix[i],
+                                                                             self.fitness_matrix[i],
+                                                                             self.parent_individual[i].chain))
         self.__create_children()
         self.__children_to_parent()
-
-        for i in range(self.count_of_individuals):
-            print("[Individual # {}]   [Function]:{}   [Fitness]: {}".format(i, self.function_matrix[i], self.fitness_matrix[i]))
-        print("[Children matrix]")
-        self.print_dna_matrix()
+        # print("[Children matrix]")
+        # self.print_dna_matrix()
 
     def solve(self):
         for generation in range(self.count_of_generations):
-            print("[Generation # {}]==============================================".format(generation))
+            print("[Generation # {}]===============================================================".format(generation))
             self.__run_generation()
