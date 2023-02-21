@@ -42,31 +42,61 @@ class DNA:
 
 class GA:
     def __init__(self):
+        # Количество особей в поколении
         self.count_of_individuals = 10
+
+        # Количество поколений работы алгоритма
         self.count_of_generations = 1000
+
+        # Вероятность мутации каждого гена в составе цепочки ДНК
         self.probability_of_mutation = 0.01
-        self.data_matrix = np.array([5, 6, 3, 4, 5, 2, 3, 8, 4, 6, 3, 9, 15, 1, 7, -3, -4])
+
+        # Данные для поиска
+        self.data_matrix = np.array([5, 6, 3, 4, 5, 2, 3, 8, 4, 6, 3, 9, 15, 1, 7])
+
+        # self.competence_level_matrix = np.array([])
+        # self.desired_values = np.array([])
+
+        # Искомое число
         self.desired_value = 15
 
+        # Количество генов, соответствующее количеству перебираемых переменных
         self.count_of_genes = self.data_matrix.shape[0]
+
+        # Матрица родительских особей
         self.parent_individual = []
+
+        # Матрица приспособленности особей
         self.fitness_matrix = np.array([])
+
+        # Значение целевой функции для каждой из особей
         self.function_matrix = np.array([])
+
+        # Матрица потомков
         self.__children_matrix = []
 
+        # Матрица возможных решений
+        self.solutions_matrix = []
+
+        # Настройка вывода данных в консоль
         np.set_printoptions(linewidth=np.inf)
         np.set_printoptions(threshold=np.inf)
 
+        # Инициализировать начальную популяцию
         self.__init_population()
 
+    # Инициализировать популяцию
+    # заполнить матрицу родительских особей объектами класса DNA
     def __init_population(self):
         for i in range(self.count_of_individuals):
             self.parent_individual.append(DNA(count_of_genes=self.count_of_genes))
 
+    # Функция вывода цепочки ДНК всех родительских особей текущего поколения
     def print_dna_matrix(self):
         for i in range(self.count_of_individuals):
             print(self.parent_individual[i].chain)
 
+    # Функция расчета значения целевой функции для каждой особи поколения
     def __calculate_function(self):
         self.function_matrix = []
         # print(self.data_matrix)
@@ -74,6 +104,7 @@ class GA:
             self.function_matrix.append((self.parent_individual[i].chain * self.data_matrix.copy()).sum())
         # print(" [Function matrix]\n", self.function_matrix)
 
+    # Функция расчета приспособленности каждой особи
     def __calculate_fitness(self):
         self.fitness_matrix = []
 
@@ -87,29 +118,23 @@ class GA:
         sum_fitness_matrix = sum(self.fitness_matrix)
         for i in range(self.count_of_individuals):
             self.fitness_matrix[i] = self.fitness_matrix[i] / sum_fitness_matrix
-        # print(self.fitness_matrix)
-        # print("[SUM]", sum(self.fitness_matrix))
 
+    # Функция реализации мутации гена в каждом гене цепочки ДНК
     def __gen_mutation(self):
         for i in range(self.count_of_individuals):
             self.parent_individual[i].mutation()
 
+    # Функция
     def __get_roulette_selected(self):
         random_value = random.random()
-        # print("[Random value]", random_value)
         i = 0
         low_limit = 0
         high_limit = self.fitness_matrix[0]
         while i != self.count_of_individuals:
-            # print("i: ", i, "[low limit]: ", low_limit, "[High limit]: ", high_limit)
             if (random_value > low_limit) and (random_value < high_limit):
                 return i
             i += 1
             low_limit = high_limit
-            # ===========
-            # if i == 10:
-                # print("i = 10")
-                # input()
             high_limit += self.fitness_matrix[i]
 
     def __create_children(self):
@@ -132,10 +157,12 @@ class GA:
         for i in range(self.count_of_individuals):
             self.parent_individual.append(self.__children_matrix[i])
 
+    def __add_solution_option(self):
+        pass
+
     def __run_generation(self):
         self.__calculate_function()
         self.__calculate_fitness()
-        self.__gen_mutation()
 
         # print("[Parents matrix]")
         # self.print_dna_matrix()
@@ -144,10 +171,9 @@ class GA:
                                                                              self.function_matrix[i],
                                                                              self.fitness_matrix[i],
                                                                              self.parent_individual[i].chain))
+        self.__gen_mutation()
         self.__create_children()
         self.__children_to_parent()
-        # print("[Children matrix]")
-        # self.print_dna_matrix()
 
     def solve(self):
         for generation in range(self.count_of_generations):
