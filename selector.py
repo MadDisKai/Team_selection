@@ -68,7 +68,7 @@ class Data:
         self.__employee_names = []
 
         # Словарь названий компетенций
-        self.__employee_names = []
+        self.__competence_names = []
 
         # Верхняя допустимая граница суммарной компетенции
         self.__competence_upper_limit = 4
@@ -115,7 +115,7 @@ class Data:
         functions_values = self.get_functions_values(bin_array)
 
         for i in range(len(functions_values)):
-            if not (self.__project_competence_table[i] - self.__competence_lower_limit < functions_values[i] <
+            if not (self.__project_competence_table[i] - self.__competence_lower_limit <= functions_values[i] <=
                     self.__project_competence_table[i] + self.__competence_upper_limit):
                 return False
         return True
