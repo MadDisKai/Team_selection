@@ -143,7 +143,7 @@ class GA:
         self.count_of_genes = self.data.get_employee_count()
 
         # Матрица родительских особей
-        self.parent_individual = []
+        self.__individual = []
 
         # Матрица приспособленности особей
         self.fitness_matrix = np.array([])
@@ -165,31 +165,47 @@ class GA:
     # заполнить матрицу родительских особей объектами класса DNA
     def __init_population(self):
         for i in range(self.count_of_individuals):
-            self.parent_individual.append(DNA(count_of_genes=self.count_of_genes))
+            # self.parent_individual.append(DNA(count_of_genes=self.count_of_genes))
+            self.__individual.append(DNA(count_of_genes=self.count_of_genes))
 
     # Функция вывода цепочки ДНК всех родительских особей текущего поколения
     def __print_dna_matrix(self):
+        for i in range(len(self.__individual)):
+            print(self.__individual[i].chain)
+
+    def __print_children_matrix(self):
+        print("CHILDREN MATRIX")
+        for i in range(len(self.__children_matrix)):
+            print(self.__children_matrix[i].chain)
+
+    # Функция мутации гена
+    def __gen_mutation(self):
         for i in range(self.count_of_individuals):
-            print(self.parent_individual[i].chain)
+            self.__individual[i].mutation()
+
+    # Функция скрещивания
+    def __breeding(self):
+        for count in range(self.count_of_individuals // 2):
+            i = random.randint(0, self.count_of_individuals - 1)
+            j = random.randint(0, self.count_of_individuals - 1)
+
+            while i == j:
+                j = random.randint(0, self.count_of_individuals - 1)
+
+            two_children = self.__individual[i] + self.__individual[j]
+            self.__individual.append(two_children[0])
+            self.__individual.append(two_children[1])
 
     # Функция расчета приспособленности каждой особи
     def __calculate_fitness(self):
         self.fitness_matrix = []
 
-        for i in range(self.count_of_individuals):
-            self.fitness_matrix.append(self.data.get_fitness_value(self.parent_individual[i].chain))
-        # print(self.fitness_matrix)
+        for i in range(len(self.__individual)):
+            self.fitness_matrix.append(self.data.get_fitness_value(self.__individual[i].chain))
 
         sum_fitness_matrix = sum(self.fitness_matrix)
-        for i in range(self.count_of_individuals):
+        for i in range(len(self.__individual)):
             self.fitness_matrix[i] = self.fitness_matrix[i] / sum_fitness_matrix
-
-            # Функция реализации мутации гена в каждом гене цепочки ДНК
-
-    # Функция мутации гена
-    def __gen_mutation(self):
-        for i in range(self.count_of_individuals):
-            self.parent_individual[i].mutation()
 
     # Функция, определяющая методом рулетки скрещивающиеся особи
     def __get_roulette_selected(self):
@@ -197,44 +213,38 @@ class GA:
         i = 0
         low_limit = 0
         high_limit = self.fitness_matrix[0]
-        while i != self.count_of_individuals:
+        while i != len(self.__individual):
             if (random_value > low_limit) and (random_value < high_limit):
                 return i
             i += 1
             low_limit = high_limit
             high_limit += self.fitness_matrix[i]
 
-    # Функция создания потомков
-    def __create_children(self):
+    # Функция отбора особей для следующего поколения
+    def __selection(self):
         self.__children_matrix = []
-        for count in range(self.count_of_individuals // 2):
-            i = self.__get_roulette_selected()
+
+        for i in range(self.count_of_individuals):
+            self.__calculate_fitness()
             j = self.__get_roulette_selected()
-
-            while i == j:
-                j = self.__get_roulette_selected()
-
-            two_children = self.parent_individual[i] + self.parent_individual[j]
-            self.__children_matrix.append(two_children[0])
-            self.__children_matrix.append(two_children[1])
-        # for i in range(self.count_of_individuals):
-        # print(self.__children_matrix[i].chain)
+            self.__children_matrix.append(self.__individual[j])
+            self.__individual.pop(j)
 
     # Функция переопределения потомков в родителей
     def __children_to_parent(self):
-        self.parent_individual = []
+        self.__individual = []
         for i in range(self.count_of_individuals):
-            self.parent_individual.append(self.__children_matrix[i])
+            self.__individual.append(self.__children_matrix[i])
 
     # Функция отбора возможных решений
     def __add_solution_option(self):
-        for i in range(self.count_of_individuals):
-            if self.data.is_relevant_solution(self.parent_individual[i].chain):
-                self.__solutions_matrix.loc[len(self.__solutions_matrix.index)] = [str(self.parent_individual[i].chain),
+        for i in range(len(self.__individual)):
+            if self.data.is_relevant_solution(self.__individual[i].chain):
+                self.__solutions_matrix.loc[len(self.__solutions_matrix.index)] = [str(self.__individual[i].chain),
                                                                                str(self.data.get_functions_values(
-                                                                                   self.parent_individual[i].chain)),
+                                                                                   self.__individual[i].chain)),
                                                                                self.data.get_fitness_value(
-                                                                                   self.parent_individual[i].chain)]
+                                                                                   self.__individual[i].chain)]
 
     # Печать полученных результатов
     def print_result(self):
@@ -242,26 +252,27 @@ class GA:
         if self.__solutions_matrix.empty:
             print("No solution was found")
         else:
-            result = self.__solutions_matrix.drop_duplicates().reset_index(drop=True)
+            result = self.__solutions_matrix.drop_duplicates().reset_index(drop=True).sort_values('FITNESS',
+                                                                                                  ascending=False)
             print(result.to_string())
 
     # Печать информации по текущему поколению
     def __print_gen_info(self):
-        for i in range(self.count_of_individuals):
+        for i in range(len(self.__individual)):
             print("[Individual # {}]   [Function]:{}   [Fitness]: {:.3f}   [DNA Chain]: {}".format(i,
                                                                                     self.data.get_functions_values(
-                                                                                    self.parent_individual[
+                                                                                    self.__individual[
                                                                                                            i].chain),
                                                                                     self.fitness_matrix[
                                                                                                        i],
-                                                                                    self.parent_individual[
+                                                                                    self.__individual[
                                                                                                        i].chain))
 
     # Запуск одного поколения генетического алгоритма
     def __run_generation(self):
-        self.__calculate_fitness()
         self.__gen_mutation()
-        self.__create_children()
+        self.__breeding()
+        self.__selection()
         self.__children_to_parent()
         self.__add_solution_option()
 
