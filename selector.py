@@ -3,6 +3,7 @@ import numpy as np
 import random
 import pandas as pd
 from tqdm import tqdm
+from tabulate import tabulate
 
 
 class DNA:
@@ -65,10 +66,11 @@ class Data:
                                                      [9, 8, 7, 4, 4, 6, 10, 1, 1, 2, 5, 1, 1, 5, 10]])
 
         # Словарь ID сотрудников
-        self.__employee_names = []
+        self.__employee_names = ['E#0', 'E#1', 'E#2', 'E#3', 'E#4', 'E#5', 'E#6', 'E#7',
+                                 'E#8', 'E#9', 'E#10', 'E#11', 'E#12', 'E#13', 'E#14']
 
         # Словарь названий компетенций
-        self.__competence_names = []
+        self.__competence_names = ['C#0', 'C#1', 'C#2', 'C#3']
 
         # Верхняя допустимая граница суммарной компетенции
         self.__competence_upper_limit = 4
@@ -81,6 +83,12 @@ class Data:
             self.__project_competence_table,
             self.__competence_upper_limit,
             self.__competence_lower_limit)
+
+    def get_employee_names(self):
+        return self.__employee_names
+
+    def get_competence_names(self):
+        return self.__competence_names
 
     # Функция, возвращающая количество рассматриваемых работников
     def get_employee_count(self):
@@ -128,10 +136,10 @@ class Data:
 class GA:
     def __init__(self):
         # Количество особей в поколении кратное 2
-        self.count_of_individuals = 10
+        self.count_of_individuals = 100
 
         # Количество поколений работы алгоритма
-        self.count_of_generations = 5000
+        self.count_of_generations = 100
 
         # Вероятность мутации каждого гена в составе цепочки ДНК
         self.probability_of_mutation = 0.05
@@ -152,7 +160,11 @@ class GA:
         self.__children_matrix = []
 
         # Матрица возможных решений
-        self.__solutions_matrix = pd.DataFrame(columns=['CHAIN', 'VALUES', 'FITNESS'])
+        row_columns_names = []
+        row_columns_names.extend(self.data.get_employee_names())
+        row_columns_names.extend(self.data.get_competence_names())
+        row_columns_names.append('FITNESS')
+        self.__solutions_matrix = pd.DataFrame(columns=row_columns_names)
 
         # Настройка вывода данных в консоль
         np.set_printoptions(linewidth=np.inf)
@@ -173,6 +185,7 @@ class GA:
         for i in range(len(self.__individual)):
             print(self.__individual[i].chain)
 
+    # Функция вывода цепочки ДНК всех дочерних особей текущего поколения
     def __print_children_matrix(self):
         print("CHILDREN MATRIX")
         for i in range(len(self.__children_matrix)):
@@ -240,11 +253,12 @@ class GA:
     def __add_solution_option(self):
         for i in range(len(self.__individual)):
             if self.data.is_relevant_solution(self.__individual[i].chain):
-                self.__solutions_matrix.loc[len(self.__solutions_matrix.index)] = [str(self.__individual[i].chain),
-                                                                               str(self.data.get_functions_values(
-                                                                                   self.__individual[i].chain)),
-                                                                               self.data.get_fitness_value(
-                                                                                   self.__individual[i].chain)]
+                row = []
+                row.extend(self.__individual[i].chain)
+                row.extend(self.data.get_functions_values(self.__individual[i].chain))
+                row.append(str(self.data.get_fitness_value(self.__individual[i].chain)))
+                # print(row)
+                self.__solutions_matrix.loc[len(self.__solutions_matrix.index)] = row
 
     # Печать полученных результатов
     def print_result(self):
@@ -252,9 +266,13 @@ class GA:
         if self.__solutions_matrix.empty:
             print("No solution was found")
         else:
-            result = self.__solutions_matrix.drop_duplicates().reset_index(drop=True).sort_values('FITNESS',
-                                                                                                  ascending=False)
-            print(result.to_string())
+            print("\n[SOLUTIONS]\n")
+            result = self.__solutions_matrix.drop_duplicates().sort_values('FITNESS',
+                                                                           ascending=False).reset_index(drop=True)
+            print(tabulate(result, headers='keys', stralign='center', tablefmt='pipe'))
+            print("______________________")
+            print("* E#1 -- Employee #1")
+            print("* C#1 -- Competence #1")
 
     # Печать информации по текущему поколению
     def __print_gen_info(self):
