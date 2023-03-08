@@ -2,8 +2,10 @@ import math
 import numpy as np
 import random
 import pandas as pd
+
 from tqdm import tqdm
 from tabulate import tabulate
+from time import gmtime, strftime
 
 
 class DNA:
@@ -49,28 +51,17 @@ class Data:
     def __init__(self):
 
         # Таблица для хранения значений уровней компетенций проекта
-        self.__project_competence_table = np.array([20, 24, 22, 12])
+        self.__project_competence_table = np.array([])
+        # self.__project_competence_table = np.array([20, 24, 22, 12])
 
         # Таблица для хранения значений уровней компетенций сотрудников [В десятичных дробях]
-        """
-        self.__employee_competence_table = np.array(
-            [[5.27, 6.59, 1.75, 1.48, 2.55, 8.07, 1.91, 2.89, 8.54, 0.17, 9.68, 7.21, 6.69, 1.81, 7.08],
-             [2.13, 8.21,  0.6, 5.16, 5.74, 3.28, 5.41, 1.26, 7.54, 7.22, 3.43, 7.01, 0.28, 5.25, 7.83],
-             [5.83, 1.06, 1.42, 7.09, 8.36, 2.34, 7.73, 8.16, 2.02, 3.25, 0.94, 6.48, 1.57, 7.8,  3.9],
-             [3.13, 5.38, 5.02, 8.55, 5.85, 2.03, 1.85, 3.83, 6.13, 1.71, 9.58, 3.3,  7.1,  8.21, 1.97]])
-        """
-        # Таблица для хранения значений уровней компетенций сотрудников [В целых числах]
-        self.__employee_competence_table = np.array([[1, 8, 7, 3, 8, 6, 6, 4, 6, 7, 6, 5, 1, 6, 4],
-                                                     [8, 7, 2, 6, 2, 9, 4, 10, 5, 2, 6, 10, 6, 6, 5],
-                                                     [5, 5, 10, 6, 6, 10, 2, 10, 5, 5, 1, 4, 2, 6, 7],
-                                                     [9, 8, 7, 4, 4, 6, 10, 1, 1, 2, 5, 1, 1, 5, 10]])
+        self.__employee_competence_table = np.array([])
 
         # Словарь ID сотрудников
-        self.__employee_names = ['E#0', 'E#1', 'E#2', 'E#3', 'E#4', 'E#5', 'E#6', 'E#7',
-                                 'E#8', 'E#9', 'E#10', 'E#11', 'E#12', 'E#13', 'E#14']
+        self.__employee_names = []
 
         # Словарь названий компетенций
-        self.__competence_names = ['C#0', 'C#1', 'C#2', 'C#3']
+        self.__competence_names = []
 
         # Верхняя допустимая граница суммарной компетенции
         self.__competence_upper_limit = 4
@@ -78,15 +69,68 @@ class Data:
         # Нижняя допустимая граница суммарной компетенции
         self.__competence_lower_limit = 0
 
+        # Путь до таблицы хранения компетенций сотрудников XLSX
+        self.__employee_competence_table_path = 'employee_competence_table.xlsx'
+
+        # Путь до таблицы хранения уровней компетенции проектов
+        self.__project_competence_table_path = 'project_competence_table.xlsx'
+
+        # Настройка вывода данных в консоль
+        np.set_printoptions(linewidth=np.inf)
+        np.set_printoptions(threshold=np.inf)
+
     def __str__(self):
         return "[REQUIRED COMPETENCE VALUES]: {}\n [UPPER LIMIT]: {}\n [LOWER LIMIT]: {}".format(
             self.__project_competence_table,
             self.__competence_upper_limit,
             self.__competence_lower_limit)
 
+    # Функция чтения данных о компетенциях сотрудников
+    def read_employee_competence_from_xlsx(self):
+        print('Reading employee competences from {}'.format(self.__employee_competence_table_path))
+        table = pd.read_excel(self.__employee_competence_table_path, index_col=0)
+        self.__employee_competence_table = table.copy().transpose().to_numpy()
+        self.__competence_names = table.copy().columns.to_list()
+        self.__employee_names = table.copy().index.to_list()
+
+    # Функция чтения данных о компетенциях сотрудников [ПЕРЕПИСАТЬ ПОСЛЕДНЮЮ СТРОКУ]
+    def read_project_competence_from_xlsx(self):
+        print('Reading project competences from {}'.format(self.__project_competence_table_path))
+        table = pd.read_excel(self.__project_competence_table_path, index_col=0)
+        self.__project_competence_table = table.copy().to_numpy()[0] # < = ВОТ ЭТУ
+        # print(self.__project_competence_table[0])
+
+    # Функция вывода таблицы уровней компетенции всех сотрудников
+    def print_employee_competence_table(self):
+        print("EMPLOYEE COMPETENCES TABLE:\n", self.__employee_competence_table)
+
+    # Функция вывода таблицы необходимых компетенций проектов
+    def print_project_competence_table(self):
+        print("PROJECT COMPETENCES TABLE:\n", self.__project_competence_table)
+
+    # Функция вывода имен сотрудников
+    def print_employee_names(self):
+        print(self.__employee_names)
+
+    # Функция вывода названий компетенций
+    def print_competence_name(self):
+        print(self.__competence_names)
+
+    # ==============================[GETTERS]===========================================================================
+
+    # Функция, возвращающая таблицу компетенций сотрудников
+    def get_employee_competence_table(self):
+        return self.__employee_competence_table
+
+    # Функция, возвращающая таблицы необходимых компетенций проектов
+    def get_project_competence_table(self):
+        return self.__project_competence_table
+
+    # Функция, возвращающая имена сотрудников
     def get_employee_names(self):
         return self.__employee_names
 
+    # Функция, возвращающая названия компетенций
     def get_competence_names(self):
         return self.__competence_names
 
@@ -117,6 +161,18 @@ class Data:
         else:
             return 1 / math.sqrt(fitness)
 
+    # ==============================[SETTERS]===========================================================================
+
+    # Функция установки верхней границы допустимых решений
+    def set_competence_upper_limit(self, upper_level):
+        self.__competence_upper_limit = upper_level
+
+    # Функция установки нижней границы допустимых решений
+    def set_competence_lower_limit(self, lower_level):
+        self.__competence_lower_limit = lower_level
+
+    # ==================================================================================================================
+
     # Проверка, подходит ли данное решение
     def is_relevant_solution(self, bin_array):
 
@@ -128,13 +184,10 @@ class Data:
                 return False
         return True
 
-    def read_from_csv(self):
-        pass
-
 
 # Класс генетического алгоритма
 class GA:
-    def __init__(self):
+    def __init__(self, data=Data()):
         # Количество особей в поколении кратное 2
         self.count_of_individuals = 100
 
@@ -145,7 +198,7 @@ class GA:
         self.probability_of_mutation = 0.05
 
         # Инициализация класса Data
-        self.data = Data()
+        self.data = data
 
         # Количество генов, соответствующее количеству сотрудников
         self.count_of_genes = self.data.get_employee_count()
@@ -267,10 +320,10 @@ class GA:
             print("No solution was found")
         else:
             print("\n[SOLUTIONS]\n")
-            result = self.__solutions_matrix.drop_duplicates().sort_values('FITNESS',
+            self.__solutions_matrix = self.__solutions_matrix.drop_duplicates().sort_values('FITNESS',
                                                                            ascending=False).reset_index(drop=True)
-            print(tabulate(result, headers='keys', stralign='center', tablefmt='pipe'))
-            print("______________________")
+            print(tabulate(self.__solutions_matrix, headers='keys', stralign='center', tablefmt='pipe'))
+            print("________________________")
             print("* E#1 -- Employee #1")
             print("* C#1 -- Competence #1")
 
@@ -279,12 +332,9 @@ class GA:
         for i in range(len(self.__individual)):
             print("[Individual # {}]   [Function]:{}   [Fitness]: {:.3f}   [DNA Chain]: {}".format(i,
                                                                                     self.data.get_functions_values(
-                                                                                    self.__individual[
-                                                                                                           i].chain),
-                                                                                    self.fitness_matrix[
-                                                                                                       i],
-                                                                                    self.__individual[
-                                                                                                       i].chain))
+                                                                                    self.__individual[i].chain),
+                                                                                    self.fitness_matrix[i],
+                                                                                    self.__individual[i].chain))
 
     # Запуск одного поколения генетического алгоритма
     def __run_generation(self):
@@ -299,3 +349,11 @@ class GA:
         for generation in tqdm(range(self.count_of_generations), ncols=100):
             self.__run_generation()
         # self.__print_gen_info()
+
+    # Функция печати полученных результатов в файл xlsx
+    def save_result(self):
+        if self.__solutions_matrix.empty:
+            print("Nothing to write")
+        else:
+            self.__solutions_matrix.to_excel("output_{}.xlsx".format(strftime("%Y_%m_%d_%H_%M_%S", gmtime())))
+
