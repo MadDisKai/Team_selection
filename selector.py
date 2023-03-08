@@ -6,6 +6,18 @@ import pandas as pd
 from tqdm import tqdm
 from tabulate import tabulate
 from time import gmtime, strftime
+from colorama import Fore
+
+
+def time_of_work(func):
+    import time
+
+    def wrapper(self, *args, **kwargs):
+        start = time.time()
+        func(self, *args, **kwargs)
+        end = time.time()
+        print('[{}] Время выполнения: {} секунд.'.format(func.__name__, end-start))
+    return wrapper
 
 
 class DNA:
@@ -52,10 +64,12 @@ class Data:
 
         # Таблица для хранения значений уровней компетенций проекта
         self.__project_competence_table = np.array([])
-        # self.__project_competence_table = np.array([20, 24, 22, 12])
 
         # Таблица для хранения значений уровней компетенций сотрудников [В десятичных дробях]
         self.__employee_competence_table = np.array([])
+
+        # Таблица для хранения ставок работников
+        self.__employee_rate_table = np.array([])
 
         # Словарь ID сотрудников
         self.__employee_names = []
@@ -74,6 +88,9 @@ class Data:
 
         # Путь до таблицы хранения уровней компетенции проектов
         self.__project_competence_table_path = 'project_competence_table.xlsx'
+
+        # Путь до таблицы хранения ставок работников
+        self.__employee_rate = 'employee_rate.xlsx'
 
         # Настройка вывода данных в консоль
         np.set_printoptions(linewidth=np.inf)
@@ -97,8 +114,15 @@ class Data:
     def read_project_competence_from_xlsx(self):
         print('Reading project competences from {}'.format(self.__project_competence_table_path))
         table = pd.read_excel(self.__project_competence_table_path, index_col=0)
-        self.__project_competence_table = table.copy().to_numpy()[0] # < = ВОТ ЭТУ
+        self.__project_competence_table = table.copy().to_numpy()[0]  # < = ВОТ ЭТУ
         # print(self.__project_competence_table[0])
+
+    # Функция чтения значений ставок сотрудников
+    def read_employee_rate_from_xlsx(self):
+        print('Reading employee rate from {}'.format(self.__employee_rate))
+        table = pd.read_excel(self.__employee_rate, index_col=0)
+        self.__employee_rate_table = table.transpose().copy().to_numpy()[0]
+        print(self.__employee_rate_table)
 
     # Функция вывода таблицы уровней компетенции всех сотрудников
     def print_employee_competence_table(self):
@@ -144,18 +168,20 @@ class Data:
 
     # Получить значения функций
     def get_functions_values(self, bin_array):
+        """
         functions_values = []
         for i in range(self.get_competence_count()):
             functions_values.append((bin_array * self.__employee_competence_table[i].copy()).sum())
+        """
+        functions_values = np.sum(bin_array * self.__employee_competence_table.copy(), axis=1)
         return functions_values
 
     # Получить значение приспособленности,
     # полученное методом функции расстояния (method of distance function)
+    # @time_of_work
     def get_fitness_value(self, bin_array):
         function_values = self.get_functions_values(bin_array)
-        fitness = 0
-        for i in range(self.get_competence_count()):
-            fitness += (function_values[i] - self.__project_competence_table[i]) ** 2
+        fitness = sum((np.array(function_values).copy() - self.__project_competence_table.copy()) ** 2)
         if math.sqrt(fitness) == 0:
             return 1
         else:
@@ -263,6 +289,7 @@ class GA:
             self.__individual.append(two_children[1])
 
     # Функция расчета приспособленности каждой особи
+    # @time_of_work
     def __calculate_fitness(self):
         self.fitness_matrix = []
 
@@ -270,8 +297,11 @@ class GA:
             self.fitness_matrix.append(self.data.get_fitness_value(self.__individual[i].chain))
 
         sum_fitness_matrix = sum(self.fitness_matrix)
+        self.fitness_matrix = np.divide(self.fitness_matrix, sum_fitness_matrix)
+        """
         for i in range(len(self.__individual)):
             self.fitness_matrix[i] = self.fitness_matrix[i] / sum_fitness_matrix
+        """
 
     # Функция, определяющая методом рулетки скрещивающиеся особи
     def __get_roulette_selected(self):
@@ -287,6 +317,7 @@ class GA:
             high_limit += self.fitness_matrix[i]
 
     # Функция отбора особей для следующего поколения
+    # @time_of_work
     def __selection(self):
         self.__children_matrix = []
 
@@ -312,6 +343,16 @@ class GA:
                 row.append(str(self.data.get_fitness_value(self.__individual[i].chain)))
                 # print(row)
                 self.__solutions_matrix.loc[len(self.__solutions_matrix.index)] = row
+
+    # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    def __add_solution(self):
+        for i in range(len(self.__individual)):
+            row = []
+            row.extend(self.__individual[i].chain)
+            row.extend(self.data.get_functions_values(self.__individual[i].chain))
+            row.append(str(self.data.get_fitness_value(self.__individual[i].chain)))
+            self.__solutions_matrix.loc[len(self.__solutions_matrix.index)] = row
+    # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
     # Печать полученных результатов
     def print_result(self):
@@ -343,15 +384,17 @@ class GA:
         self.__selection()
         self.__children_to_parent()
         self.__add_solution_option()
+        # self.__add_solution()
 
     # Запуск алгоритма решения
     def solve(self):
-        for generation in tqdm(range(self.count_of_generations), ncols=100):
+        for generation in tqdm(range(self.count_of_generations), ncols=100, bar_format="%s{l_bar}{bar}{r_bar}"
+                                                                                       % Fore.GREEN):
             self.__run_generation()
         # self.__print_gen_info()
 
     # Функция печати полученных результатов в файл xlsx
-    def save_result(self):
+    def save_result_xlsx(self):
         if self.__solutions_matrix.empty:
             print("Nothing to write")
         else:
