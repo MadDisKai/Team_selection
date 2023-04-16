@@ -248,8 +248,8 @@ class Data:
                 self.__employee_competence_table = np.delete(self.__employee_competence_table, index, 1)
                 self.__employee_names.pop(index)
                 self.employee_count = len(self.__employee_names)
-                print(self.employee_count)
-                print(self.__employee_names)
+                # print(self.employee_count)
+                # print(self.__employee_names)
                 # print("INDEX: {}".format(index))
             else:
                 break
@@ -512,9 +512,11 @@ class Solver:
     # Поиск решений
     def solve(self):
         writer = pd.ExcelWriter(self.__output_file_name, engine='xlsxwriter')
+        # worksheet = writer.sheets['Лист1']
         # print("Project count {}".format(self.data.get_project_count()))
 
         for i in range(self.data.get_project_count()):
+            # worksheet.write(self.__row - 1, 0, "PROJECT # {:2}".format(i))
             print("+---------------------------------------------+")
             print("|               PROJECT # {:2}                  |".format(i))
             print("+---------------------------------------------+")
@@ -524,6 +526,8 @@ class Solver:
                 # break
                 pass
             else:
+                self.__current_solution_series = self.__current_solution_series.rename("PROJECT_#_{}".format(i))
+                # print(self.__current_solution_series)
                 self.data.delete_employees(self.__current_solution_series)
                 self.__write_solution_to_excel(writer)
 
