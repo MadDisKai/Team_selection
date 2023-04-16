@@ -25,6 +25,7 @@ class DNA:
 
         self.probability_of_mutation = probability_of_mutation
         self.count_of_genes = count_of_genes
+        # print("COUNT OF GENES DNA {}".format(self.count_of_genes))
 
         if chain is not None:
             self.chain = chain
@@ -44,14 +45,16 @@ class DNA:
         child_1_chain[crossover_point:] = child_2_chain[crossover_point:].copy()
         child_2_chain[crossover_point:] = temp.copy()
 
-        child_1 = DNA(chain=child_1_chain.copy())
-        child_2 = DNA(chain=child_2_chain.copy())
+        child_1 = DNA(chain=child_1_chain.copy(), count_of_genes=self.count_of_genes)
+        child_2 = DNA(chain=child_2_chain.copy(), count_of_genes=self.count_of_genes)
         return [child_1, child_2]
 
     def __invert_gen(self, gen_number):
+        # print("CHAIN LEN {} | GEN NUMBER {}".format(len(self.chain), gen_number))
         self.chain[gen_number] = not self.chain[gen_number]
 
     def mutation(self):
+        # print("COUNT OF GENES {}".format(self.count_of_genes))
         for gen in range(self.count_of_genes - 1):
             probability = random.random()
             if probability < self.probability_of_mutation:
@@ -78,7 +81,7 @@ class Data:
         self.__competence_names = []
 
         # Верхняя допустимая граница суммарной компетенции
-        self.__competence_upper_limit = 4
+        self.__competence_upper_limit = 6
 
         # Нижняя допустимая граница суммарной компетенции
         self.__competence_lower_limit = 0
@@ -91,6 +94,22 @@ class Data:
 
         # Путь до таблицы хранения ставок работников
         self.__employee_rate = 'employee_rate.xlsx'
+
+        # Номер текущего проекта
+        self.__current_project_number = 0
+
+        # Количество проектов
+
+        self.__project_count = 0
+
+        self.read_employee_competence_from_xlsx()
+        self.read_project_competence_from_xlsx()
+        self.read_employee_rate_from_xlsx()
+
+        # Количество работников
+        self.employee_count = len(self.__employee_names)
+        # print(self.employee_count)
+        # print(self.__employee_names)
 
         # Настройка вывода данных в консоль
         np.set_printoptions(linewidth=np.inf)
@@ -112,17 +131,18 @@ class Data:
 
     # Функция чтения данных о компетенциях сотрудников [ПЕРЕПИСАТЬ ПОСЛЕДНЮЮ СТРОКУ]
     def read_project_competence_from_xlsx(self):
-        print('Reading project competences from {}'.format(self.__project_competence_table_path))
+        # print('Reading project competences from {}'.format(self.__project_competence_table_path))
         table = pd.read_excel(self.__project_competence_table_path, index_col=0)
-        self.__project_competence_table = table.copy().to_numpy()[0]  # < = ВОТ ЭТУ
-        # print(self.__project_competence_table[0])
+        self.__project_count = table.shape[0]
+        self.__project_competence_table = table.copy().to_numpy()[self.__current_project_number]
+        # print(self.__project_competence_table)
 
     # Функция чтения значений ставок сотрудников
     def read_employee_rate_from_xlsx(self):
         print('Reading employee rate from {}'.format(self.__employee_rate))
         table = pd.read_excel(self.__employee_rate, index_col=0)
         self.__employee_rate_table = table.transpose().copy().to_numpy()[0]
-        print(self.__employee_rate_table)
+        # print(self.__employee_rate_table)
 
     # Функция вывода таблицы уровней компетенции всех сотрудников
     def print_employee_competence_table(self):
@@ -160,7 +180,12 @@ class Data:
 
     # Функция, возвращающая количество рассматриваемых работников
     def get_employee_count(self):
+        # print(self.__employee_competence_table.shape[1])
         return self.__employee_competence_table.shape[1]
+
+    # Функция, возвращающая количество рассматриваемых проектов
+    def get_project_count(self):
+        return self.__project_count
 
     # Функция, возвращающая количество компетенций
     def get_competence_count(self):
@@ -197,6 +222,10 @@ class Data:
     def set_competence_lower_limit(self, lower_level):
         self.__competence_lower_limit = lower_level
 
+    # Установка текущего проекта, для которого производится подбор сотрудников
+    def set_current_project_number(self, number):
+        self.__current_project_number = number
+        self.read_project_competence_from_xlsx()
     # ==================================================================================================================
 
     # Проверка, подходит ли данное решение
@@ -209,6 +238,21 @@ class Data:
                     self.__project_competence_table[i] + self.__competence_upper_limit):
                 return False
         return True
+
+    # Удалить сотрудников из рассмотрения для последующих решений
+    def delete_employees(self, series_input):
+
+        for i in range(len(series_input.index)):
+            if series_input.index[i] in self.__employee_names:
+                index = self.__employee_names.index(series_input.index[i])
+                self.__employee_competence_table = np.delete(self.__employee_competence_table, index, 1)
+                self.__employee_names.pop(index)
+                self.employee_count = len(self.__employee_names)
+                print(self.employee_count)
+                print(self.__employee_names)
+                # print("INDEX: {}".format(index))
+            else:
+                break
 
 
 # Класс генетического алгоритма
@@ -227,7 +271,9 @@ class GA:
         self.data = data
 
         # Количество генов, соответствующее количеству сотрудников
-        self.count_of_genes = self.data.get_employee_count()
+        self.count_of_genes = self.data.employee_count
+        print("GA count_of_genes {}".format(self.count_of_genes))
+        # self.count_of_genes = len(data.get_employee_names())
 
         # Матрица родительских особей
         self.__individual = []
@@ -250,13 +296,13 @@ class GA:
         np.set_printoptions(threshold=np.inf)
 
         # Инициализировать начальную популяцию
-        self.__init_population()
+        # self.__init_population()
 
     # Инициализировать популяцию
     # заполнить матрицу родительских особей объектами класса DNA
     def __init_population(self):
+        self.__individual = []
         for i in range(self.count_of_individuals):
-            # self.parent_individual.append(DNA(count_of_genes=self.count_of_genes))
             self.__individual.append(DNA(count_of_genes=self.count_of_genes))
 
     # Функция вывода цепочки ДНК всех родительских особей текущего поколения
@@ -379,6 +425,7 @@ class GA:
 
     # Запуск одного поколения генетического алгоритма
     def __run_generation(self):
+        # print("COUNT OF GENES {}".format(self.count_of_genes))
         self.__gen_mutation()
         self.__breeding()
         self.__selection()
@@ -388,8 +435,10 @@ class GA:
 
     # Запуск алгоритма решения
     def solve(self):
-        for generation in tqdm(range(self.count_of_generations), ncols=100, bar_format="%s{l_bar}{bar}{r_bar}"
-                                                                                       % Fore.GREEN):
+        self.__init_population()
+        for generation in tqdm(range(self.count_of_generations),
+                               ncols=100,
+                               bar_format="%s{l_bar}{bar}{r_bar}" % Fore.GREEN):
             self.__run_generation()
         # self.__print_gen_info()
 
@@ -400,3 +449,82 @@ class GA:
         else:
             self.__solutions_matrix.to_excel("output_{}.xlsx".format(strftime("%Y_%m_%d_%H_%M_%S", gmtime())))
 
+    # Вернуть наилучшее решение из полученных при помощи генетического алгоритма
+    def get_solution(self):
+        if self.__solutions_matrix.empty:
+            return None
+        table = self.__solutions_matrix.iloc[0]
+        table = pd.to_numeric(table, errors='coerce')
+        # print(table[table > 0])
+        return table[table > 0]
+
+
+class Solver:
+    def __init__(self, data=Data()):
+
+        # Инициализация объекта класса Data()
+        self.data = data
+        #
+
+        # Количество попыток на каждую итерацию
+        self.__try_count = 5
+
+        # Серия для хранения текущего решения
+        self.__current_solution_series = pd.Series(dtype='float64')
+
+        # Название файла вывода
+        self.__output_file_name = "output.xlsx"
+
+        # Начальная строка записи в таблице Excel вывода
+        self.__row = 1
+
+        # Расстояния между полученными решениями
+        self.__space = 3
+
+    # Функция получения решения для текущего проекта
+    def __solution_for_current_project(self, current_project):
+
+        for i in range(self.__try_count):
+            print("[TRY #{}]==============================================================================".format(i+1))
+
+            genetic_algorithm = GA(data=self.data)
+            genetic_algorithm.data.set_current_project_number(current_project)
+            genetic_algorithm.solve()
+            genetic_algorithm.print_result()
+
+            if genetic_algorithm.get_solution() is not None:
+                self.__current_solution_series = genetic_algorithm.get_solution()
+
+                # Удалить сотрудников
+
+                print(self.__current_solution_series)
+                return 1
+        return 0
+
+    # Записать решение в файл
+    def __write_solution_to_excel(self, writer):
+
+        self.__current_solution_series.to_excel(writer, startrow=self.__row, startcol=0)
+        self.__row = len(self.__current_solution_series.index) + self.__row + self.__space + 1
+        self.__current_solution_series = None
+        # print(self.__row)
+
+    # Поиск решений
+    def solve(self):
+        writer = pd.ExcelWriter(self.__output_file_name, engine='xlsxwriter')
+        # print("Project count {}".format(self.data.get_project_count()))
+
+        for i in range(self.data.get_project_count()):
+            print("+---------------------------------------------+")
+            print("|               PROJECT # {:2}                  |".format(i))
+            print("+---------------------------------------------+")
+
+            if self.__solution_for_current_project(i) == 0:
+                # print("ERROR NO SOLUTION HAS BEEN FOUND")
+                # break
+                pass
+            else:
+                self.data.delete_employees(self.__current_solution_series)
+                self.__write_solution_to_excel(writer)
+
+        writer.save()
