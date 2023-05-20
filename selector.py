@@ -20,6 +20,16 @@ def time_of_work(func):
     return wrapper
 
 
+class Enum:
+    def __init__(self):
+        # = 0
+        self.genetic_algorithm = 0            # Канонический генетический алгоритм
+        # = 1
+        self.genetic_algorithm_genitor = 1    # Генетический алгоритм модель генитор
+        # = 2
+        self.genetic_algorithm_punctuated_equilibrium = 2  # Метод прерывистого равновесия
+
+
 class DNA:
     def __init__(self, count_of_genes=10, probability_of_mutation=0.01, chain=None):
 
@@ -123,7 +133,7 @@ class Data:
 
     # Функция чтения данных о компетенциях сотрудников
     def read_employee_competence_from_xlsx(self):
-        print('Reading employee competences from {}'.format(self.__employee_competence_table_path))
+        # print('Reading employee competences from {}'.format(self.__employee_competence_table_path))
         table = pd.read_excel(self.__employee_competence_table_path, index_col=0)
         self.__employee_competence_table = table.copy().transpose().to_numpy()
         self.__competence_names = table.copy().columns.to_list()
@@ -139,7 +149,7 @@ class Data:
 
     # Функция чтения значений ставок сотрудников
     def read_employee_rate_from_xlsx(self):
-        print('Reading employee rate from {}'.format(self.__employee_rate))
+        # print('Reading employee rate from {}'.format(self.__employee_rate))
         table = pd.read_excel(self.__employee_rate, index_col=0)
         self.__employee_rate_table = table.transpose().copy().to_numpy()[0]
         # print(self.__employee_rate_table)
@@ -259,7 +269,7 @@ class Data:
 class GA:
     def __init__(self, data=Data()):
         # Количество особей в поколении кратное 2
-        self.count_of_individuals = 100
+        self.count_of_individuals = 50
 
         # Количество поколений работы алгоритма
         self.count_of_generations = 100
@@ -272,7 +282,7 @@ class GA:
 
         # Количество генов, соответствующее количеству сотрудников
         self.count_of_genes = self.data.employee_count
-        print("GA count_of_genes {}".format(self.count_of_genes))
+        # print("GA count_of_genes {}".format(self.count_of_genes))
         # self.count_of_genes = len(data.get_employee_names())
 
         # Матрица родительских особей
@@ -408,7 +418,7 @@ class GA:
         else:
             print("\n[SOLUTIONS]\n")
             self.__solutions_matrix = self.__solutions_matrix.drop_duplicates().sort_values('FITNESS',
-                                                                           ascending=False).reset_index(drop=True)
+                                                                            ascending=False).reset_index(drop=True)
             print(tabulate(self.__solutions_matrix, headers='keys', stralign='center', tablefmt='pipe'))
             print("________________________")
             print("* E#1 -- Employee #1")
@@ -447,6 +457,9 @@ class GA:
         if self.__solutions_matrix.empty:
             print("Nothing to write")
         else:
+            self.__solutions_matrix = self.__solutions_matrix.drop_duplicates().sort_values('FITNESS',
+                                                                                        ascending=False).reset_index(
+                                                                                        drop=True)
             self.__solutions_matrix.to_excel("output_{}.xlsx".format(strftime("%Y_%m_%d_%H_%M_%S", gmtime())))
 
     # Вернуть наилучшее решение из полученных при помощи генетического алгоритма
@@ -457,6 +470,142 @@ class GA:
         table = pd.to_numeric(table, errors='coerce')
         # print(table[table > 0])
         return table[table > 0]
+
+
+# Наследованный класс генетического алгоритма Генитор
+class GaGenitor(GA):
+    def __init__(self, data=Data()):
+        super().__init__(data)
+
+    # Переопределение метода селекции, в нем необходимости нет
+    def __selection(self):
+        pass
+
+    # Вернуть индекс наименее приспособленной особи
+    def __get_weakest_id(self):
+        self.__calculate_fitness()
+        return np.argmin(self.fitness_matrix, axis=0)
+
+    # Переопределение метода скрещивания особей
+    def __breeding(self):
+        # self.__children_matrix = []
+        # +++++++++++++++++++++++
+        for count in range(self.count_of_individuals // 4):
+            # Потомок занимает место наименее приспособленной особи в популяции
+            i = random.randint(0, self.count_of_individuals - 1)
+            j = random.randint(0, self.count_of_individuals - 1)
+
+            while i == j:
+                j = random.randint(0, self.count_of_individuals - 1)
+
+            two_children = self.__individual[i] + self.__individual[j]
+            first_ch = self.data.get_fitness_value(two_children[0])
+            second_ch = self.data.get_fitness_value(two_children[0])
+
+            if first_ch > second_ch:
+                # В популяцию отправляется первый ребенок
+                self.__individual[self.__get_weakest_id()] = first_ch
+                pass
+            else:
+                # В популяцию отправляется второй ребенок
+                self.__individual[self.__get_weakest_id()] = second_ch
+                pass
+
+            # Потомок занимает место наименее приспособленного родителя
+            i = random.randint(0, self.count_of_individuals - 1)
+            j = random.randint(0, self.count_of_individuals - 1)
+
+            while i == j:
+                j = random.randint(0, self.count_of_individuals - 1)
+
+            two_children = self.__individual[i] + self.__individual[j]
+            first_ch = self.data.get_fitness_value(two_children[0])
+            second_ch = self.data.get_fitness_value(two_children[0])
+
+            if first_ch > second_ch:
+                # Родителя замещает первый ребенок
+                if self.data.get_fitness_value(self.__individual[i]) < self.data.get_fitness_value(
+                        self.__individual[j]):
+                    self.__individual[i] = first_ch
+                else:
+                    self.__individual[j] = first_ch
+                pass
+            else:
+                # Родителя замещает второй ребенок
+                if self.data.get_fitness_value(self.__individual[i]) < self.data.get_fitness_value(
+                        self.__individual[j]):
+                    self.__individual[i] = second_ch
+                else:
+                    self.__individual[j] = second_ch
+                pass
+
+
+# Наследованный класс генетического алгоритма Метод прерывистого равновесия
+class GaPunctuatedEquilibrium(GA):
+    def __init__(self, data=Data()):
+        super().__init__(data)
+
+    # Переопределение функции отбора особей для следующего поколения
+    # @time_of_work
+    def __selection(self):
+        self.__children_matrix = []
+        self.__calculate_fitness()
+
+        average_fitness = np.sum(self.fitness_matrix.copy()) / self.fitness_matrix.shape[0]
+
+        for i in range(len(self.__individual)):
+            if self.data.get_fitness_value(self.__individual[i]) >= average_fitness:
+                self.__children_matrix.append(self.__individual[i])
+
+
+# Наследованный класс генетического алгоритма Генетический алгоритм с нефиксированным размером популяции
+class GaUnfixedPopulationSize(GA):
+    def __init__(self, data=Data()):
+        super().__init__(data)
+        self.__init_age = 0
+
+        # Матрица возрастов особей
+        self.__ages = [self.__init_age for i in range(self.count_of_individuals)]
+        self.__child_ages = []
+
+        # Предельный возраст особи
+        self.__limit_age = 5
+
+        # Количество погибших особей в предыдущем поколении
+        self.__dead = 0
+
+    # Функция старения особей
+    def __make_individual_older(self):
+        for i in range(len(self.__ages)):
+            self.__ages[i] += 1
+
+    # Функция мутации гена
+    def __gen_mutation(self):
+        for i in range(len(self.__individual)):
+            self.__individual[i].mutation()
+
+    # Функция скрещивания
+    def __breeding(self):
+        self.__children_matrix = []
+        for count in range(len(self.__individual) // 2):
+            i = random.randint(0, len(self.__individual) - 1)
+            j = random.randint(0, len(self.__individual) - 1)
+
+            while i == j:
+                j = random.randint(0, len(self.__individual) - 1)
+
+            two_children = self.__individual[i] + self.__individual[j]
+            self.__children_matrix.append(two_children[0])
+            self.__child_ages.append(self.__init_age)
+
+            self.__children_matrix.append(two_children[1])
+            self.__child_ages.append(self.__init_age)
+
+    # Запуск одного поколения генетического алгоритма
+    def __run_generation(self):
+        self.__gen_mutation()
+        self.__breeding()
+        self.__add_solution_option()
 
 
 class Solver:
@@ -481,13 +630,29 @@ class Solver:
         # Расстояния между полученными решениями
         self.__space = 3
 
+        # Название используемого в текущий момент алгоритма
+        self.__alg_name = "Genetic Algorithm"
+
     # Функция получения решения для текущего проекта
-    def __solution_for_current_project(self, current_project):
+    def __solution_for_current_project(self, current_project, alg):
 
         for i in range(self.__try_count):
             print("[TRY #{}]==============================================================================".format(i+1))
 
-            genetic_algorithm = GA(data=self.data)
+            if alg == 0:
+                genetic_algorithm = GA(data=self.data)
+                self.__alg_name = "Genetic Algorithm"
+            elif alg == 1:
+                genetic_algorithm = GaGenitor(data=self.data)
+                self.__alg_name = "Genetic Algorithm Genitor"
+            elif alg == 2:
+                genetic_algorithm = GaPunctuatedEquilibrium(data=self.data)
+                self.__alg_name = "Genetic Punctuated Equilibrium"
+            else:
+                genetic_algorithm = GA(data=self.data)
+                self.__alg_name = "Genetic Algorithm"
+
+            print("[USING]--{}--".format(self.__alg_name))
             genetic_algorithm.data.set_current_project_number(current_project)
             genetic_algorithm.solve()
             genetic_algorithm.print_result()
@@ -496,7 +661,7 @@ class Solver:
                 self.__current_solution_series = genetic_algorithm.get_solution()
 
                 # Удалить сотрудников
-
+                self.data.delete_employees(self.__current_solution_series)
                 print(self.__current_solution_series)
                 return 1
         return 0
@@ -510,25 +675,25 @@ class Solver:
         # print(self.__row)
 
     # Поиск решений
-    def solve(self):
+    @time_of_work
+    # Функция поиска решений
+    def solve(self, alg):
         writer = pd.ExcelWriter(self.__output_file_name, engine='xlsxwriter')
-        # worksheet = writer.sheets['Лист1']
-        # print("Project count {}".format(self.data.get_project_count()))
 
         for i in range(self.data.get_project_count()):
-            # worksheet.write(self.__row - 1, 0, "PROJECT # {:2}".format(i))
             print("+---------------------------------------------+")
             print("|               PROJECT # {:2}                  |".format(i))
             print("+---------------------------------------------+")
 
-            if self.__solution_for_current_project(i) == 0:
+            if self.__solution_for_current_project(i, alg) == 0:
                 # print("ERROR NO SOLUTION HAS BEEN FOUND")
                 # break
                 pass
             else:
                 self.__current_solution_series = self.__current_solution_series.rename("PROJECT_#_{}".format(i))
                 # print(self.__current_solution_series)
-                self.data.delete_employees(self.__current_solution_series)
+                # self.data.delete_employees(self.__current_solution_series)
                 self.__write_solution_to_excel(writer)
 
         writer.save()
+
