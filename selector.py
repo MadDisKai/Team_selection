@@ -782,7 +782,10 @@ class Solver:
                 self.__alg_name = "Genetic Algorithm Genitor"
             elif alg == 2:
                 genetic_algorithm = GaPunctuatedEquilibrium(data=self.data)
-                self.__alg_name = "Genetic Punctuated Equilibrium"
+                self.__alg_name = "Genetic Algorithm Punctuated Equilibrium"
+            elif alg == 3:
+                genetic_algorithm = GaUnfixedPopulationSize(data=self.data)
+                self.__alg_name = "Genetic Algorithm Unfixed Population Size"
             else:
                 genetic_algorithm = GA(data=self.data)
                 self.__alg_name = "Genetic Algorithm"
