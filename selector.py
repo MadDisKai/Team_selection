@@ -28,6 +28,8 @@ class Enum:
         self.genetic_algorithm_genitor = 1    # Генетический алгоритм модель генитор
         # = 2
         self.genetic_algorithm_punctuated_equilibrium = 2  # Метод прерывистого равновесия
+        # = 3
+        self.genetic_algorithm_unfixed_population = 3     # Метод динамической популяции
 
 
 class DNA:
@@ -294,6 +296,9 @@ class GA:
         # Матрица потомков
         self.__children_matrix = []
 
+        # Массив хранения истории среднего значения приспособленности
+        self.__average_history = []
+
         # Матрица возможных решений
         row_columns_names = []
         row_columns_names.extend(self.data.get_employee_names())
@@ -391,24 +396,48 @@ class GA:
 
     # Функция отбора возможных решений
     def __add_solution_option(self):
+        sum_fit = 0
         for i in range(len(self.__individual)):
+            fitness = self.data.get_fitness_value(self.__individual[i].chain)
+            sum_fit += fitness
             if self.data.is_relevant_solution(self.__individual[i].chain):
                 row = []
                 row.extend(self.__individual[i].chain)
                 row.extend(self.data.get_functions_values(self.__individual[i].chain))
-                row.append(str(self.data.get_fitness_value(self.__individual[i].chain)))
-                # print(row)
+                row.append(str(fitness))
                 self.__solutions_matrix.loc[len(self.__solutions_matrix.index)] = row
 
+        average_val = sum_fit / len(self.__individual)
+
+        # self.__average_history.append(round(sum_fit * 100, 2))
+
+        self.__average_history.append(round(average_val * 100, 2))
+        # self.__average_history.append(len(self.__individual))
     # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
     def __add_solution(self):
+        average_val = 0
         for i in range(len(self.__individual)):
             row = []
             row.extend(self.__individual[i].chain)
             row.extend(self.data.get_functions_values(self.__individual[i].chain))
-            row.append(str(self.data.get_fitness_value(self.__individual[i].chain)))
+            fitness = self.data.get_fitness_value(self.__individual[i].chain)
+            row.append(str(fitness))
             self.__solutions_matrix.loc[len(self.__solutions_matrix.index)] = row
+            average_val += fitness
+
+        average_val = average_val / len(self.__individual)
+        self.__average_history.append(average_val)
     # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    # Вывод данных о средней приспособленности популяции каждого поколения
+    def print_hist(self):
+        print("[HISTORY]")
+        print(self.__average_history)
+
+    # Функция возвращающая данные о средней приспособленности популяции каждого поколения
+    def get_hist(self):
+        return self.__average_history
 
     # Печать полученных результатов
     def print_result(self):
@@ -450,6 +479,7 @@ class GA:
                                ncols=100,
                                bar_format="%s{l_bar}{bar}{r_bar}" % Fore.GREEN):
             self.__run_generation()
+        # self.print_hist()
         # self.__print_gen_info()
 
     # Функция печати полученных результатов в файл xlsx
@@ -562,27 +592,107 @@ class GaPunctuatedEquilibrium(GA):
 class GaUnfixedPopulationSize(GA):
     def __init__(self, data=Data()):
         super().__init__(data)
+        # Возраст только родившейся особи
         self.__init_age = 0
 
         # Матрица возрастов особей
-        self.__ages = [self.__init_age for i in range(self.count_of_individuals)]
-        self.__child_ages = []
+        # self.__ages = [self.__init_age for i in range(self.count_of_individuals)]
+        # self.__child_ages = []
 
-        # Предельный возраст особи
-        self.__limit_age = 5
+        # Максимально возможная продолжительность жизни особи
+        self.__MaxLT = 6
 
-        # Количество погибших особей в предыдущем поколении
-        self.__dead = 0
+        # Минимально возможная продолжительность жизни особи
+        self.__MinLT = 1
+
+        # Текущий возраст особи
+        self.__current_age = [self.__init_age for i in range(self.count_of_individuals)]
+        self.__child_current_age = []
+
+        # Возможный возраст особи
+        self.__age = []
+        self.__child_age = []
+
+        #
+        self.__nu = (1/2) * (self.__MaxLT - self.__MaxLT)
+
+        self.__MinFit = 0
+        self.__MaxFit = 0
+        self.__AvgFit = 0
 
     # Функция старения особей
     def __make_individual_older(self):
-        for i in range(len(self.__ages)):
-            self.__ages[i] += 1
+        for i in range(len(self.__age)):
+            self.__age[i] += 1
 
     # Функция мутации гена
     def __gen_mutation(self):
         for i in range(len(self.__individual)):
             self.__individual[i].mutation()
+
+    # Вернуть минимальное значение приспособленности
+    def __get_min_fitness(self):
+        # self.__calculate_fitness()
+        return self.fitness_matrix.min()
+
+    # Вернуть максимальное значение приспособленности
+    def __get_max_fitness(self):
+        # self.__calculate_fitness()
+        return self.fitness_matrix.max()
+
+    # Вернуть среднее значение приспособленности
+    def __get_avg_fitness(self):
+        # self.__calculate_fitness()
+        return self.fitness_matrix.mean()
+
+    # Очистка значений глобальных параметров
+    def __free_param(self):
+        self.__fitness_matrix = []
+        self.__MinFit = 0
+        self.__MaxFit = 0
+        self.__AvgFit = 0
+
+    # Расчет продолжительности жизни особи individual_i
+    def __get_lifetime(self, individual_i):
+        if self.__AvgFit >= self.fitness_matrix[individual_i]:
+            lifetime = self.__MinLT + self.__nu * (\
+                        (self.fitness_matrix[individual_i].copy() - self.__get_min_fitness()) / \
+                        (self.__AvgFit - self.__get_min_fitness()))
+        else:
+            lifetime = (1/2) * (self.__MinLT + self.__MaxLT) + self.__nu * ((self.fitness_matrix[individual_i].copy()\
+                                                                           - self.__AvgFit)/(self.__get_max_fitness()-\
+                                                                                             self.__AvgFit))
+        return lifetime
+
+    # Рассчитать продолжительности жизней особей
+    def __calculate_ages_individuals(self):
+        for i in range(len(self.__individual)):
+            self.__age[i] = self.__get_lifetime(i)
+
+    def __calculate_ages_children(self):
+        for i in range(len(self.__children_matrix)):
+            self.__child_age[i] = self.__get_lifetime(i)
+
+    # Функция переопределения потомков в родителей
+    def __children_to_parent(self):
+        self.__individual = []
+        for i in range(len(self.__children_matrix)):
+            self.__individual.append(self.__children_matrix[i])
+            self.__age.append(self.__child_age[i])
+            self.__current_age.append(self.__child_current_age[i])
+
+        self.__children_matrix = []
+        self.__child_age = []
+        self.__child_current_age = []
+
+    # Убрать особи с вышедшим сроком жизни
+    def __kill_older(self):
+        for i in range(len(self.__individual)):
+            if self.__current_age[i] > self.__age[i]:
+                self.__age.pop(i)
+                self.__current_age.pop(i)
+                self.__individual.pop(i)
+                # pass
 
     # Функция скрещивания
     def __breeding(self):
@@ -596,16 +706,41 @@ class GaUnfixedPopulationSize(GA):
 
             two_children = self.__individual[i] + self.__individual[j]
             self.__children_matrix.append(two_children[0])
-            self.__child_ages.append(self.__init_age)
+            self.__child_current_age.append(self.__init_age)
 
             self.__children_matrix.append(two_children[1])
-            self.__child_ages.append(self.__init_age)
+            self.__child_current_age.append(self.__init_age)
+
+    # Инициализировать популяцию
+    # заполнить матрицу родительских особей объектами класса DNA
+    def __init_population(self):
+        self.__individual = []
+        for i in range(self.count_of_individuals):
+            self.__individual.append(DNA(count_of_genes=self.count_of_genes))
+
+        # Оценка возраста начальной популяции
+        self.__calculate_fitness()
+        self.__MinFit = self.__get_min_fitness()
+        self.__MaxFit = self.__get_max_fitness()
+        self.__AvgFit = self.__get_avg_fitness()
+        self.__calculate_ages_individuals()
+        # Очистить
+        self.__free_param()
 
     # Запуск одного поколения генетического алгоритма
     def __run_generation(self):
+        self.__make_individual_older()
         self.__gen_mutation()
+        self.__calculate_fitness()
         self.__breeding()
+        self.__free_param()
+
+        self.__calculate_fitness()
+        self.__calculate_ages_children()
+        self.__children_to_parent()
+        self.__kill_older()
         self.__add_solution_option()
+        self.__free_param()
 
 
 class Solver:
