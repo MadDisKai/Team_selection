@@ -42,7 +42,9 @@ class DNA:
         if chain is not None:
             self.chain = chain
         else:
-            self.chain = np.array([random.randint(0, 1) for i in range(self.count_of_genes)])
+            # zero_one_array = [0, 1]
+            self.chain = np.array([np.random.choice([0, 1], p=[0.99, 0.01]) for i in range(self.count_of_genes)])
+            # self.chain = np.array([random.randint(0, 1) for i in range(self.count_of_genes)])
 
     def __str__(self):
         return "[DNA chain]: \n{}".format(self.chain)
@@ -57,8 +59,8 @@ class DNA:
         child_1_chain[crossover_point:] = child_2_chain[crossover_point:].copy()
         child_2_chain[crossover_point:] = temp.copy()
 
-        child_1 = DNA(chain=child_1_chain.copy(), count_of_genes=self.count_of_genes)
-        child_2 = DNA(chain=child_2_chain.copy(), count_of_genes=self.count_of_genes)
+        child_1 = DNA(chain=child_1_chain.copy(), count_of_genes=self.count_of_genes, probability_of_mutation=self.probability_of_mutation)
+        child_2 = DNA(chain=child_2_chain.copy(), count_of_genes=self.count_of_genes, probability_of_mutation=self.probability_of_mutation)
         return [child_1, child_2]
 
     def __invert_gen(self, gen_number):
@@ -93,7 +95,7 @@ class Data:
         self.__competence_names = []
 
         # Верхняя допустимая граница суммарной компетенции
-        self.__competence_upper_limit = 6
+        self.__competence_upper_limit = 3
 
         # Нижняя допустимая граница суммарной компетенции
         self.__competence_lower_limit = 0
@@ -145,7 +147,8 @@ class Data:
     def read_project_competence_from_xlsx(self):
         # print('Reading project competences from {}'.format(self.__project_competence_table_path))
         table = pd.read_excel(self.__project_competence_table_path, index_col=0)
-        self.__project_count = table.shape[0]
+        self.__project_count = \
+            table.shape[0]
         self.__project_competence_table = table.copy().to_numpy()[self.__current_project_number]
         # print(self.__project_competence_table)
 
@@ -220,7 +223,9 @@ class Data:
         function_values = self.get_functions_values(bin_array)
         fitness = sum((np.array(function_values).copy() - self.__project_competence_table.copy()) ** 2)
         if math.sqrt(fitness) == 0:
-            return 1
+            return 2
+        elif math.sqrt(fitness) < 1:
+            return (1 / (1 - math.sqrt(fitness))) + 1
         else:
             return 1 / math.sqrt(fitness)
 
@@ -271,13 +276,13 @@ class Data:
 class GA:
     def __init__(self, data=Data()):
         # Количество особей в поколении кратное 2
-        self.count_of_individuals = 50
+        self.count_of_individuals = 100
 
         # Количество поколений работы алгоритма
-        self.count_of_generations = 100
+        self.count_of_generations = 400
 
         # Вероятность мутации каждого гена в составе цепочки ДНК
-        self.probability_of_mutation = 0.05
+        self.probability_of_mutation = 0.000001
 
         # Инициализация класса Data
         self.data = data
@@ -318,7 +323,7 @@ class GA:
     def __init_population(self):
         self.__individual = []
         for i in range(self.count_of_individuals):
-            self.__individual.append(DNA(count_of_genes=self.count_of_genes))
+            self.__individual.append(DNA(count_of_genes=self.count_of_genes, probability_of_mutation=self.probability_of_mutation))
 
     # Функция вывода цепочки ДНК всех родительских особей текущего поколения
     def __print_dna_matrix(self):
@@ -358,6 +363,7 @@ class GA:
             self.fitness_matrix.append(self.data.get_fitness_value(self.__individual[i].chain))
 
         sum_fitness_matrix = sum(self.fitness_matrix)
+
         self.fitness_matrix = np.divide(self.fitness_matrix, sum_fitness_matrix)
         """
         for i in range(len(self.__individual)):
@@ -368,7 +374,7 @@ class GA:
     def __get_roulette_selected(self):
         random_value = random.random()
         i = 0
-        low_limit = 0
+        low_limit: float = 0.0
         high_limit = self.fitness_matrix[0]
         while i != len(self.__individual):
             if (random_value > low_limit) and (random_value < high_limit):
@@ -456,11 +462,14 @@ class GA:
     # Печать информации по текущему поколению
     def __print_gen_info(self):
         for i in range(len(self.__individual)):
-            print("[Individual # {}]   [Function]:{}   [Fitness]: {:.3f}   [DNA Chain]: {}".format(i,
+
+            print("[Individual # {:3.0f}]   [Function]:{}   [Fitness]: {:.16f}   [DNA Chain]: {}".format(i,
                                                                                     self.data.get_functions_values(
                                                                                     self.__individual[i].chain),
                                                                                     self.fitness_matrix[i],
-                                                                                    self.__individual[i].chain))
+                                                                                    self.__individual[i].chain)) 
+
+            # print("{}".format(self.fitness_matrix[i]))
 
     # Запуск одного поколения генетического алгоритма
     def __run_generation(self):
@@ -475,12 +484,19 @@ class GA:
     # Запуск алгоритма решения
     def solve(self):
         self.__init_population()
+        """
+        # ===================================
+        self.__calculate_fitness()
+        self.__print_gen_info()
+        # ===================================
+        """
         for generation in tqdm(range(self.count_of_generations),
                                ncols=100,
                                bar_format="%s{l_bar}{bar}{r_bar}" % Fore.GREEN):
             self.__run_generation()
-        # self.print_hist()
-        # self.__print_gen_info()
+        self.print_hist()
+        self.__print_gen_info()
+
 
     # Функция печати полученных результатов в файл xlsx
     def save_result_xlsx(self):
@@ -716,7 +732,7 @@ class GaUnfixedPopulationSize(GA):
     def __init_population(self):
         self.__individual = []
         for i in range(self.count_of_individuals):
-            self.__individual.append(DNA(count_of_genes=self.count_of_genes))
+            self.__individual.append(DNA(count_of_genes=self.count_of_genes, probability_of_mutation=self.probability_of_mutation))
 
         # Оценка возраста начальной популяции
         self.__calculate_fitness()

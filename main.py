@@ -8,21 +8,23 @@ if __name__ == '__main__':
     prob = selector.Data()
     alg = selector.Enum()
 
-    pp = selector.Solver(data=prob)
-    pp.solve(alg.genetic_algorithm_unfixed_population)
+    # prob.print_employee_competence_table()
 
-    """
-    pp = selector.GaUnfixedPopulationSize(data=prob)
+    # pp = selector.Solver(data=prob)
+    # pp.solve(alg.genetic_algorithm_unfixed_population)
+
+    pp = selector.GaGenitor(data=prob)
     pp.solve()
     pp.save_result_xlsx()
 
-    
+    """
     times = []
     hist = []
     fit = []
     count = 10
 
     for i in range(count):
+    
         pp = selector.GaUnfixedPopulationSize(data=prob)
         start = time.time()
         pp.solve()
