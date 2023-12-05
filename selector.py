@@ -764,7 +764,6 @@ class Solver:
 
         # Инициализация объекта класса Data()
         self.data = data
-        #
 
         # Количество попыток на каждую итерацию
         self.__try_count = 5
@@ -773,7 +772,7 @@ class Solver:
         self.__current_solution_series = pd.Series(dtype='float64')
 
         # Название файла вывода
-        self.__output_file_name = "output.xlsx"
+        self.__output_file_name = "output1.xlsx"
 
         # Начальная строка записи в таблице Excel вывода
         self.__row = 1
@@ -784,39 +783,73 @@ class Solver:
         # Название используемого в текущий момент алгоритма
         self.__alg_name = "Genetic Algorithm"
 
+        # Текущий алгоритм подбора групп
+        self.__current_algorithm = 0
+
+        # Флаг отображения логирования
+        self.__logger_flag = 0
+
+
+    # Метод установки текущего алгоритма решения
+    # algorithm_index
+    # 0 - Genetic Algorithm
+    # 1 - Genetic Algorithm Genitor
+    # 2 - Genetic Algorithm Punctuated Equilibrium
+    # 3 - Genetic Algorithm Unfixed Population Size
+    def set_current_algorithm(self, algorithm_index):
+        self.__current_algorithm = algorithm_index
+
+    # Метод установки имени выводного файла
+    def set_output_file_name(self, name):
+        self.__output_file_name = name
+
+    # Метод установки количества попыток подбора
+    def set_try_count(self, count):
+        self.__try_count = count
+
+    # Метод включения логирования
+    def enable_logger(self):
+        self.__logger_flag = 1
+
     # Функция получения решения для текущего проекта
-    def __solution_for_current_project(self, current_project, alg):
+    def __solution_for_current_project(self):
 
         for i in range(self.__try_count):
-            print("[TRY #{}]==============================================================================".format(i+1))
+            if self.__logger_flag == 1:
+                print("[TRY #{}]==============================================================================".format(i+1))
 
-            if alg == 0:
+            if self.__current_algorithm == 0:
                 genetic_algorithm = GA(data=self.data)
                 self.__alg_name = "Genetic Algorithm"
-            elif alg == 1:
+            elif self.__current_algorithm == 1:
                 genetic_algorithm = GaGenitor(data=self.data)
                 self.__alg_name = "Genetic Algorithm Genitor"
-            elif alg == 2:
+            elif self.__current_algorithm == 2:
                 genetic_algorithm = GaPunctuatedEquilibrium(data=self.data)
                 self.__alg_name = "Genetic Algorithm Punctuated Equilibrium"
-            elif alg == 3:
+            elif self.__current_algorithm == 3:
                 genetic_algorithm = GaUnfixedPopulationSize(data=self.data)
                 self.__alg_name = "Genetic Algorithm Unfixed Population Size"
             else:
                 genetic_algorithm = GA(data=self.data)
                 self.__alg_name = "Genetic Algorithm"
 
-            print("[USING]--{}--".format(self.__alg_name))
-            genetic_algorithm.data.set_current_project_number(current_project)
+            if self.__logger_flag == 1:
+                print("[USING]--{}--".format(self.__alg_name))
+            
             genetic_algorithm.solve()
-            genetic_algorithm.print_result()
+
+            if self.__logger_flag == 1:
+                genetic_algorithm.print_result()
 
             if genetic_algorithm.get_solution() is not None:
                 self.__current_solution_series = genetic_algorithm.get_solution()
 
                 # Удалить сотрудников
-                self.data.delete_employees(self.__current_solution_series)
-                print(self.__current_solution_series)
+                # self.data.delete_employees(self.__current_solution_series)
+
+                if self.__logger_flag == 1:
+                    print(self.__current_solution_series)
                 return 1
         return 0
 
@@ -828,26 +861,16 @@ class Solver:
         self.__current_solution_series = None
         # print(self.__row)
 
-    # Поиск решений
     @time_of_work
     # Функция поиска решений
-    def solve(self, alg):
+    def solve(self):
         writer = pd.ExcelWriter(self.__output_file_name, engine='xlsxwriter')
-
-        for i in range(self.data.get_project_count()):
-            print("+---------------------------------------------+")
-            print("|               PROJECT # {:2}                  |".format(i))
-            print("+---------------------------------------------+")
-
-            if self.__solution_for_current_project(i, alg) == 0:
-                # print("ERROR NO SOLUTION HAS BEEN FOUND")
-                # break
-                pass
-            else:
-                self.__current_solution_series = self.__current_solution_series.rename("PROJECT_#_{}".format(i))
-                # print(self.__current_solution_series)
-                # self.data.delete_employees(self.__current_solution_series)
-                self.__write_solution_to_excel(writer)
+    
+        if self.__solution_for_current_project() == 0:
+            pass
+        else:
+            self.__current_solution_series = self.__current_solution_series.rename("PROJECT")
+            self.__write_solution_to_excel(writer)
 
         writer.save()
 
