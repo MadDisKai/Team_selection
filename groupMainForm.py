@@ -11,10 +11,10 @@ class MainForm:
     def __init__(self):
         # Список названий вариаций генетического алгоритма
         self.__GA_algorithms_name_list = [
-            'Genetic Algorithm',
-            'Genetic Algorithm Genitor',
-            'Genetic Algorithm Punctuated Equilibrium',
-            'Genetic Algorithm Unfixed Population Size']
+            'Genetic Algorithm (GA)',
+            'GA Genitor',
+            'GA Punctuated Equilibrium',
+            'GA Unfixed Population Size']
 
         # Соответствующие индексы названиям генетическим алгоритмам
         self.__GA_algorithms_index = [
@@ -24,6 +24,16 @@ class MainForm:
             3
         ]
         
+        # Список названий текстовых сравнений
+        self.__COMP_algorithms_name_list = [
+            "Цель - Формула",
+            "Объект - Области исследований + Шифр",
+            "Назначение - Шифр",
+            "Состав - Области исследований",
+            "Технические характеристики - \n Области исследований",
+            "Средний"
+        ]
+
         # Лист возможных количеств возможных итераций
         self.__GA_possible_try_list = [i for i in range(1, 16)]
 
@@ -35,7 +45,7 @@ class MainForm:
 
         # Главное окно
         self.mainWindow = Tk()
-        
+
         # Состояние Флага ЛОГИРОВАНИЕ РЕШЕНИЯ В КОНСОЛЬ
         self.__var_logger_flag = IntVar()
         self.__var_logger_flag.set(0)
@@ -44,12 +54,15 @@ class MainForm:
         self.__output_file_path = StringVar()
         self.__output_file_path.set("{}\Output.xlsx".format(os.path.dirname(__file__)))
 
+        # Путь к файлу с подбираемым ТЗ
+        self.__input_file_TZ_path = StringVar()
+
         # Переменная хранения состояния кнопки "Решить"
         self.__solve_button_state = 'normal'
 
         # Настройка главного окна
         self.mainWindow.title('Приложение подбора проектных групп')
-        self.mainWindow.geometry("450x250")
+        self.mainWindow.geometry("450x400")
         self.mainWindow.resizable(False, False)
         # self.mainWindow.iconbitmap(default="favicon.ico")
     
@@ -69,6 +82,15 @@ class MainForm:
             values = self.__GA_algorithms_name_list
         )
         self.__GA_selection_combobox.current(0)
+
+        # Выпадающий список алгоритмов текстографического сравнения
+        self.__COMP_selection_combobox = Combobox(
+            self.mainWindow,
+            state="readonly",
+            textvariable = self.__COMP_algorithms_name_list,
+            values = self.__COMP_algorithms_name_list
+        )
+        self.__COMP_selection_combobox.current(0)
 
         # Выпадающий список количества возможных итераций решения
         self.__GA_try_selection_combobox = Combobox(
@@ -91,21 +113,47 @@ class MainForm:
             textvariable = self.__output_file_path
         )
 
-        #
+        # Поле ввода пути к ТЗ
+        self.__input_file_TZ_path_entry = Entry(
+            textvariable = self.__input_file_TZ_path
+        )
+
+        # Сепаратор первый сверху
+        self.__separator_obj_first = ttk.Separator(self.mainWindow, orient="horizontal")
+        self.__separator_obj_second = ttk.Separator(self.mainWindow, orient="horizontal")
+
+        # Подписи
         self.__label_ga_selection_combobox = Label(text="Генетический алгоритм для решения")
         self.__label_try_selection_combobox = Label(text="Количество попыток подсчета")
         self.__label_output_entry = Label(text="Путь сохранения результата")
+        self.__label_input_TZ_path = Label(text="Путь к техническому заданию")
+        self.__label_texts_compare_type = Label(text="Параметр сравнения текстов")
 
         # Отображение элементов интерфейса 
-        self.__label_ga_selection_combobox.grid()
-        self.__GA_selection_combobox.grid()                     # TODO: Положение  элементов
-        self.__label_try_selection_combobox.grid()
-        self.__GA_try_selection_combobox.grid()                 # TODO: Положение  элементов
-        self.__logger_check.grid()                              # TODO: Положение  элементов
-        self.__solve_button.grid()                              # TODO: Положение  элементов
+        self.__label_input_TZ_path.place(x = 10, y = 10)
+        self.__input_file_TZ_path_entry.place(x = 13, y = 35, width = 420)
 
-        self.__label_output_entry.grid()
-        self.__output_file_path_entry.grid()
+        self.__label_output_entry.place(x = 10, y = 60)
+        self.__output_file_path_entry.place(x = 13, y = 85, width = 420)
+
+        self.__separator_obj_second.place(x = 10, y = 112, width = 250, relwidth=0.4)
+
+        self.__label_texts_compare_type.place(x = 10, y = 120)
+        self.__COMP_selection_combobox.place(x = 230, y = 120, width = 205) 
+
+        self.__label_ga_selection_combobox.place(x = 10, y = 145)
+        self.__GA_selection_combobox.place(x = 230, y = 145, width = 205)
+
+        self.__label_try_selection_combobox.place(x = 10, y = 170)
+        self.__GA_try_selection_combobox.place(x = 230, y = 170, width = 205)
+
+        self.__separator_obj_first.place(x = 10, y = 360, width = 250, relwidth=0.4)
+
+
+
+        self.__solve_button.place(x = 180, y = 368, width = 260)
+        # self.__solve_button.place(x = 350, y = 220, width = 90)                # TODO Вариант 2
+        self.__logger_check.place(x = 10, y = 370)
 
     # Событие нажатие кнопки "Решить"
     def __solve_button_push(self):
@@ -113,15 +161,7 @@ class MainForm:
         if self.__var_logger_flag.get() == 1:
             self.__GA_solver.enable_logger()
  
-        self.__GA_solver.set_try_count(self.__GA_try_selection_combobox.get())
+        self.__GA_solver.set_try_count(int(self.__GA_try_selection_combobox.get()))
         self.__GA_solver.set_output_file_name(self.__output_file_path.get())
-        self.__solve_button_state = 'disabled'
         self.__GA_solver.solve()
-        self.__solve_button_state = 'normal'
-
-
-        # print(self.__var_logger_flag.get())
-        # print(self.__GA_selection_combobox.get())
-        # print(self.__GA_iter_selection_combobox.get())
-        # print(self.__output_file_path.get())
     
