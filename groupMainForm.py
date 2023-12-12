@@ -34,8 +34,20 @@ class MainForm:
             "Средний"
         ]
 
-        # Лист возможных количеств возможных итераций
+        # Лист возможных количеств возможных итераций-попыток
         self.__GA_possible_try_list = [i for i in range(1, 16)]
+
+        # Лист количеств полоколений решения
+        self.__GA_generation_count_list = [i*50 for i in range(1, 21)]
+
+        # Лист возможных верхних границ
+        self.__GA_competence_upper_limit_list = [i for i in range(0, 51)]
+
+        # Лист вероятностей мутации
+        self.__GA_probability_of_mutation_list = [0.00001*i for i in range(0, 1000)]
+
+        # Литс количеств особей
+        self.__GA_count_of_individuals_list = [2*i for i in range(25, 100)]
 
         # Сущность исходных данных Генетических алгоритмов
         self.__GA_init_data = selector.Data()
@@ -101,6 +113,42 @@ class MainForm:
         )
         self.__GA_try_selection_combobox.current(0)
 
+        # Выпадающий список количеств полоколений решения
+        self.__GA_generation_count_combobox = Combobox(
+            self.mainWindow,
+            state="readonly",
+            textvariable = self.__GA_generation_count_list,
+            values = self.__GA_generation_count_list
+        )
+        self.__GA_generation_count_combobox.current(1)
+
+        # Выпадающий список верхних допустимыз границ решения
+        self.__GA_competence_upper_limit_combobox = Combobox(
+            self.mainWindow,
+            state="readonly",
+            textvariable = self.__GA_competence_upper_limit_list,
+            values = self.__GA_competence_upper_limit_list
+        )
+        self.__GA_competence_upper_limit_combobox.current(5)
+
+        # Выпадающий список количеств особей
+        self.__GA_count_of_individuals_combobox = Combobox(
+            self.mainWindow,
+            state="readonly",
+            textvariable = self.__GA_count_of_individuals_list,
+            values = self.__GA_count_of_individuals_list
+        )
+        self.__GA_count_of_individuals_combobox.current(5)
+    
+        # Выпадающий список вероятностей мутации
+        self.__GA_probability_of_mutation_combobox = Combobox(
+            self.mainWindow,
+            state="readonly",
+            textvariable = self.__GA_probability_of_mutation_list,
+            values = self.__GA_probability_of_mutation_list
+        )
+        self.__GA_probability_of_mutation_combobox.current(1)
+
         # Чекбокс флага логирования
         self.__logger_check = ttk.Checkbutton(
             variable=self.__var_logger_flag,
@@ -128,6 +176,10 @@ class MainForm:
         self.__label_output_entry = Label(text="Путь сохранения результата")
         self.__label_input_TZ_path = Label(text="Путь к техническому заданию")
         self.__label_texts_compare_type = Label(text="Параметр сравнения текстов")
+        self.__label_generation_count = Label(text="Количество поколений")
+        self.__label_count_of_individuals = Label(text="Количество особей")
+        self.__label_probability_of_mutation = Label(text="Вероятность мутации")
+        self.__label_competence_upper_limit = Label(text="Верхняя допустимая граница решения")
 
         # Отображение элементов интерфейса 
         self.__label_input_TZ_path.place(x = 10, y = 10)
@@ -147,21 +199,39 @@ class MainForm:
         self.__label_try_selection_combobox.place(x = 10, y = 170)
         self.__GA_try_selection_combobox.place(x = 230, y = 170, width = 205)
 
+        self.__label_generation_count.place(x = 10, y = 195)
+        self.__GA_generation_count_combobox.place(x = 230, y = 195, width = 205)
+
+        self.__label_count_of_individuals.place(x = 10, y = 220)
+        self.__GA_count_of_individuals_combobox.place(x = 230, y = 220, width = 205)
+
+        self.__label_probability_of_mutation.place(x = 10, y = 245)
+        self.__GA_probability_of_mutation_combobox.place(x = 230, y = 245, width = 205)
+
+        self.__label_competence_upper_limit.place(x = 10, y = 270)
+        self.__GA_competence_upper_limit_combobox.place(x = 230, y = 270, width = 205)
+
+
         self.__separator_obj_first.place(x = 10, y = 360, width = 250, relwidth=0.4)
 
 
 
         self.__solve_button.place(x = 180, y = 368, width = 260)
-        # self.__solve_button.place(x = 350, y = 220, width = 90)                # TODO Вариант 2
+        # self.__solve_button.place(x = 350, y = 220, width = 90)                # TODO: Вариант 2
         self.__logger_check.place(x = 10, y = 370)
 
     # Событие нажатие кнопки "Решить"
     def __solve_button_push(self):
+        self.__GA_solver.init_alg()
 
         if self.__var_logger_flag.get() == 1:
             self.__GA_solver.enable_logger()
  
-        self.__GA_solver.set_try_count(int(self.__GA_try_selection_combobox.get()))
-        self.__GA_solver.set_output_file_name(self.__output_file_path.get())
+        # self.__GA_solver.set_try_count(int(self.__GA_try_selection_combobox.get()))
+        # self.__GA_solver.set_output_file_name(self.__output_file_path.get())
+        # self.__GA_solver.set_count_of_generations(int(self.__GA_generation_count_combobox.get()))
+
+        # TODO: Дооформить передачу параметров
+
         self.__GA_solver.solve()
     

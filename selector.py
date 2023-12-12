@@ -789,6 +789,8 @@ class Solver:
         # Флаг отображения логирования
         self.__logger_flag = 0
 
+        # Объект генетического алгоритма
+        self.genetic_algorithm = None
 
     # Метод установки текущего алгоритма решения
     # algorithm_index
@@ -811,39 +813,38 @@ class Solver:
     def enable_logger(self):
         self.__logger_flag = 1
 
+    def init_alg(self):
+        if self.__current_algorithm == 0:
+            self.genetic_algorithm = GA(data=self.data)
+            self.__alg_name = "Genetic Algorithm"
+        elif self.__current_algorithm == 1:
+            self.genetic_algorithm = GaGenitor(data=self.data)
+            self.__alg_name = "Genetic Algorithm Genitor"
+        elif self.__current_algorithm == 2:
+            self.genetic_algorithm = GaPunctuatedEquilibrium(data=self.data)
+            self.__alg_name = "Genetic Algorithm Punctuated Equilibrium"
+        elif self.__current_algorithm == 3:
+            self.genetic_algorithm = GaUnfixedPopulationSize(data=self.data)
+            self.__alg_name = "Genetic Algorithm Unfixed Population Size"
+        else:
+            self.genetic_algorithm = GA(data=self.data)
+            self.__alg_name = "Genetic Algorithm"
+
     # Функция получения решения для текущего проекта
     def __solution_for_current_project(self):
 
         for i in range(self.__try_count):
             if self.__logger_flag == 1:
                 print("[TRY #{}]==============================================================================".format(i+1))
-
-            if self.__current_algorithm == 0:
-                genetic_algorithm = GA(data=self.data)
-                self.__alg_name = "Genetic Algorithm"
-            elif self.__current_algorithm == 1:
-                genetic_algorithm = GaGenitor(data=self.data)
-                self.__alg_name = "Genetic Algorithm Genitor"
-            elif self.__current_algorithm == 2:
-                genetic_algorithm = GaPunctuatedEquilibrium(data=self.data)
-                self.__alg_name = "Genetic Algorithm Punctuated Equilibrium"
-            elif self.__current_algorithm == 3:
-                genetic_algorithm = GaUnfixedPopulationSize(data=self.data)
-                self.__alg_name = "Genetic Algorithm Unfixed Population Size"
-            else:
-                genetic_algorithm = GA(data=self.data)
-                self.__alg_name = "Genetic Algorithm"
-
-            if self.__logger_flag == 1:
                 print("[USING]--{}--".format(self.__alg_name))
             
-            genetic_algorithm.solve()
+            self.genetic_algorithm.solve()
 
             if self.__logger_flag == 1:
-                genetic_algorithm.print_result()
+                self.genetic_algorithm.print_result()
 
-            if genetic_algorithm.get_solution() is not None:
-                self.__current_solution_series = genetic_algorithm.get_solution()
+            if self.genetic_algorithm.get_solution() is not None:
+                self.__current_solution_series = self.genetic_algorithm.get_solution()
 
                 # Удалить сотрудников
                 # self.data.delete_employees(self.__current_solution_series)
@@ -874,3 +875,22 @@ class Solver:
 
         writer.save()
 
+    # Метод установки количество особей для расчета в генетическом алгоритме
+    def set_count_of_individuals(self, count):
+        if count % 2 == 0:
+            self.genetic_algorithm.count_of_individuals = count
+        else:
+            pass
+
+    # Метод установки вероятности мутации
+    def set_probability_of_mutation(self, probability):
+        self.genetic_algorithm.probability_of_mutation = probability
+
+    # Метод установки количества поколений ГА
+    def set_count_of_generations(self, count):
+        self.genetic_algorithm.count_of_generations = count
+
+    # Метод установки верхней границы допустимых решений
+    def set_comp_upper_limit(self, upper_limit):
+        self.genetic_algorithm.data.__competence_upper_limit = upper_limit
+        
