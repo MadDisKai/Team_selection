@@ -107,18 +107,18 @@ class Data:
         self.__project_competence_table_path = 'project_competence_table.xlsx'
 
         # Путь до таблицы хранения ставок работников
-        self.__employee_rate = 'employee_rate.xlsx'
+        # self.__employee_rate = 'employee_rate.xlsx'
 
         # Номер текущего проекта
-        self.__current_project_number = 0
+        # self.__current_project_number = 0
 
         # Количество проектов
 
         self.__project_count = 0
 
         self.read_employee_competence_from_xlsx()
-        self.read_project_competence_from_xlsx()
-        self.read_employee_rate_from_xlsx()
+        # self.read_project_competence_from_xlsx()
+        # self.read_employee_rate_from_xlsx()
 
         # Количество работников
         self.employee_count = len(self.__employee_names)
@@ -144,28 +144,28 @@ class Data:
         self.__employee_names = table.copy().index.to_list()
 
     # Функция чтения данных о компетенциях сотрудников [ПЕРЕПИСАТЬ ПОСЛЕДНЮЮ СТРОКУ]
-    def read_project_competence_from_xlsx(self):
-        # print('Reading project competences from {}'.format(self.__project_competence_table_path))
-        table = pd.read_excel(self.__project_competence_table_path, index_col=0)
-        self.__project_count = \
-            table.shape[0]
-        self.__project_competence_table = table.copy().to_numpy()[self.__current_project_number]
-        # print(self.__project_competence_table)
+    # def read_project_competence_from_xlsx(self):
+    #     # print('Reading project competences from {}'.format(self.__project_competence_table_path))
+    #     table = pd.read_excel(self.__project_competence_table_path, index_col=0)
+    #     self.__project_count = \
+    #         table.shape[0]
+    #     self.__project_competence_table = table.copy().to_numpy()[self.__current_project_number]
+    #     # print(self.__project_competence_table)
 
     # Функция чтения значений ставок сотрудников
-    def read_employee_rate_from_xlsx(self):
-        # print('Reading employee rate from {}'.format(self.__employee_rate))
-        table = pd.read_excel(self.__employee_rate, index_col=0)
-        self.__employee_rate_table = table.transpose().copy().to_numpy()[0]
-        # print(self.__employee_rate_table)
+    # def read_employee_rate_from_xlsx(self):
+    #     # print('Reading employee rate from {}'.format(self.__employee_rate))
+    #     table = pd.read_excel(self.__employee_rate, index_col=0)
+    #     self.__employee_rate_table = table.transpose().copy().to_numpy()[0]
+    #     # print(self.__employee_rate_table)
 
     # Функция вывода таблицы уровней компетенции всех сотрудников
-    def print_employee_competence_table(self):
-        print("EMPLOYEE COMPETENCES TABLE:\n", self.__employee_competence_table)
+    # def print_employee_competence_table(self):
+    #     print("EMPLOYEE COMPETENCES TABLE:\n", self.__employee_competence_table)
 
     # Функция вывода таблицы необходимых компетенций проектов
-    def print_project_competence_table(self):
-        print("PROJECT COMPETENCES TABLE:\n", self.__project_competence_table)
+    # def print_project_competence_table(self):
+    #     print("PROJECT COMPETENCES TABLE:\n", self.__project_competence_table)
 
     # Функция вывода имен сотрудников
     def print_employee_names(self):
@@ -323,7 +323,9 @@ class GA:
     def __init_population(self):
         self.__individual = []
         for i in range(self.count_of_individuals):
-            self.__individual.append(DNA(count_of_genes=self.count_of_genes, probability_of_mutation=self.probability_of_mutation))
+            self.__individual.append(
+                DNA(count_of_genes = self.count_of_genes, 
+                probability_of_mutation = self.probability_of_mutation))
 
     # Функция вывода цепочки ДНК всех родительских особей текущего поколения
     def __print_dna_matrix(self):
@@ -894,3 +896,7 @@ class Solver:
     def set_comp_upper_limit(self, upper_limit):
         self.genetic_algorithm.data.__competence_upper_limit = upper_limit
         
+    # Метод установки списка компетенций проектов
+    def set_project_competence_list(self, list_input : list):
+        self.data.__project_competence_table = np.array(list_input)
+        # print(self.data.__project_competence_table)

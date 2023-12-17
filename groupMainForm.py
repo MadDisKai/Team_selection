@@ -1,5 +1,6 @@
 import selector
 import os
+import numpy as np
 
 from tkinter import *
 from tkinter import ttk
@@ -222,16 +223,19 @@ class MainForm:
 
     # Событие нажатие кнопки "Решить"
     def __solve_button_push(self):
-        self.__GA_solver.init_alg()
+        self.__GA_solver.set_project_competence_list([7, 2, 5, 8])
+        print(self.__GA_solver.data.get_project_competence_table())
 
-        if self.__var_logger_flag.get() == 1:
-            self.__GA_solver.enable_logger()
+        # self.__GA_solver.init_alg()
+
+        # if self.__var_logger_flag.get() == 1:
+        #     self.__GA_solver.enable_logger()
  
-        # self.__GA_solver.set_try_count(int(self.__GA_try_selection_combobox.get()))
-        # self.__GA_solver.set_output_file_name(self.__output_file_path.get())
-        # self.__GA_solver.set_count_of_generations(int(self.__GA_generation_count_combobox.get()))
+        # # self.__GA_solver.set_try_count(int(self.__GA_try_selection_combobox.get()))
+        # # self.__GA_solver.set_output_file_name(self.__output_file_path.get())
+        # # self.__GA_solver.set_count_of_generations(int(self.__GA_generation_count_combobox.get()))
 
-        # TODO: Дооформить передачу параметров
+        # # TODO: Дооформить передачу параметров
 
-        self.__GA_solver.solve()
+        # self.__GA_solver.solve()
     
