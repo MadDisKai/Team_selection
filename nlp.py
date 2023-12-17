@@ -418,7 +418,7 @@ class NLP:
 
 
     def set_top_k(self, top_k):
-        if (top_k>=1):
+        if (top_k>=1 and top_k<=len(codes)):
             self.top_k = top_k
         else:
             pass
