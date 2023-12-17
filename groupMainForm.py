@@ -215,34 +215,85 @@ class MainForm:
         self.__label_competence_upper_limit.place(x = 10, y = 270)
         self.__GA_competence_upper_limit_combobox.place(x = 230, y = 270, width = 205)
 
-
         self.__separator_obj_first.place(x = 10, y = 360, width = 250, relwidth=0.4)
 
-
-
         self.__solve_button.place(x = 180, y = 368, width = 260)
-        # self.__solve_button.place(x = 350, y = 220, width = 90)                # TODO: Вариант 2
+        # self.__solve_button.place(x = 350, y = 220, width = 90)     # TODO: Вариант 2
         self.__logger_check.place(x = 10, y = 370)
 
-    # Событие нажатие кнопки "Решить"
     def __solve_button_push(self):
+        """
+        Событие: нажатие кнопки "Решить"
+        """
+        # ------- Часть обработки естественного языка -------
+
         nlp_module = NLP()
+        # Установить путь к ТЗ
+        nlp_module.set_file_path(self.__input_file_TZ_path.get())
+        # Установить метод сравнения 
+        nlp_module.set_mode_param(self.__COMP_selection_combobox.current() + 1)
+        # Запуск обработки естественного языка
+        result = nlp_module.solve()
 
-        # nlp_module.se
+        # TODO: Отладка
+        print(result.code_list)
+        # print(result.score_list)
 
-        # self.__GA_solver.set_project_competence_list([7, 2, 5, 8])
-        #  print(self.__GA_solver.data.get_project_competence_table())
+        # ------- Часть работы генетического алгоритма -------
 
-        # self.__GA_solver.init_alg()
+        # Установить текущий алгоритм для решения
+        self.__GA_solver.set_current_algorithm(self.__GA_selection_combobox.current() + 1)
+        # Инициализация выбранного алгоритма
+        self.__GA_solver.init_alg()
+        # Установить количество попыток решения
+        self.__GA_solver.set_try_count(
+            self.__GA_possible_try_list[self.__GA_try_selection_combobox.current()])
+        # Установить файл вывода работы алгоритма
+        self.__GA_solver.set_output_file_name(self.__output_file_path.get())
+        # Установить количество поколений решения
+        self.__GA_solver.set_count_of_generations(
+            self.__GA_generation_count_list[self.__GA_generation_count_combobox.current()])
+        # Установить количество особей генетического алгоритма
+        self.__GA_solver.set_count_of_individuals(
+            self.__GA_count_of_individuals_list[self.__GA_count_of_individuals_combobox.current()])
+        # Установить вероятность мутации
+        self.__GA_solver.set_probability_of_mutation(
+            self.__GA_probability_of_mutation_list[self.__GA_probability_of_mutation_combobox.current()])
+        # Установить верхнюю допустимую границу решения
+        self.__GA_solver.set_comp_upper_limit(
+            self.__GA_competence_upper_limit_list[self.__GA_competence_upper_limit_combobox.current()])
+        
+        # Передача параметров после естественной обработки языка
+        self.__GA_solver.set_project_competence_list(result.score_list)
 
-        # if self.__var_logger_flag.get() == 1:
-        #     self.__GA_solver.enable_logger()
- 
-        # # self.__GA_solver.set_try_count(int(self.__GA_try_selection_combobox.get()))
-        # # self.__GA_solver.set_output_file_name(self.__output_file_path.get())
-        # # self.__GA_solver.set_count_of_generations(int(self.__GA_generation_count_combobox.get()))
-
-        # # TODO: Дооформить передачу параметров
+        # TODO: Запуск решения генетическим алгоритмом
+        # Необходимо удостовериться, что количество компетенций в расчете совпадает как у проекта 
+        # так и у сотрудников
 
         # self.__GA_solver.solve()
-    
+
+        # Вывод в консоль текущих парамтеров работы 
+        if self.__var_logger_flag.get() == 1:
+            self.__log_current_parameters()
+
+
+    def __log_current_parameters(self):
+        """
+        Метод отображения параметров работы системы 
+        """
+        print(
+            f"""
+\033[2;31;43m ЕСТЕСТВЕННАЯ ОБРАБОТКА ЯЗЫКА \033[0;0m
+Путь к ТЗ                                    {self.__input_file_TZ_path.get()}
+Метод сравнения                              {self.__COMP_selection_combobox.current() + 1} -- {self.__COMP_selection_combobox.get()}
+\033[2;31;43m ГЕНЕТИЧЕСКИЙ АЛГОРИТМ        \033[0;0m    
+Выбранный Генетический алгоритм              {self.__GA_selection_combobox.current() + 1} -- {self.__GA_selection_combobox.get()}
+Количество попыток решения                   {self.__GA_try_selection_combobox.get()}
+Файл вывода работы алгоритма                 {self.__output_file_path.get()}
+Количество поколений решения                 {self.__GA_generation_count_combobox.get()}
+Количество особей генетического алгоритма    {self.__GA_count_of_individuals_combobox.get()}
+Вероятность мутации особей                   {self.__GA_probability_of_mutation_combobox.get()}
+Верхняя допустимая границйа решения          {self.__GA_competence_upper_limit_combobox.get()}
+
+""")
+ 

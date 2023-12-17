@@ -19,19 +19,6 @@ def time_of_work(func):
         print('[{}] Время выполнения: {} секунд.'.format(func.__name__, end-start))
     return wrapper
 
-
-class Enum:
-    def __init__(self):
-        # = 0
-        self.genetic_algorithm = 0            # Канонический генетический алгоритм
-        # = 1
-        self.genetic_algorithm_genitor = 1    # Генетический алгоритм модель генитор
-        # = 2
-        self.genetic_algorithm_punctuated_equilibrium = 2  # Метод прерывистого равновесия
-        # = 3
-        self.genetic_algorithm_unfixed_population = 3     # Метод динамической популяции
-
-
 class DNA:
     def __init__(self, count_of_genes=10, probability_of_mutation=0.01, chain=None):
 
@@ -208,11 +195,6 @@ class Data:
 
     # Получить значения функций
     def get_functions_values(self, bin_array):
-        """
-        functions_values = []
-        for i in range(self.get_competence_count()):
-            functions_values.append((bin_array * self.__employee_competence_table[i].copy()).sum())
-        """
         functions_values = np.sum(bin_array * self.__employee_competence_table.copy(), axis=1)
         return functions_values
 
@@ -794,13 +776,16 @@ class Solver:
         # Объект генетического алгоритма
         self.genetic_algorithm = None
 
-    # Метод установки текущего алгоритма решения
-    # algorithm_index
-    # 0 - Genetic Algorithm
-    # 1 - Genetic Algorithm Genitor
-    # 2 - Genetic Algorithm Punctuated Equilibrium
-    # 3 - Genetic Algorithm Unfixed Population Size
+    
     def set_current_algorithm(self, algorithm_index):
+        """
+        ### Метод установки текущего алгоритма решения:
+
+        - 0 - Genetic Algorithm
+        - 1 - Genetic Algorithm Genitor
+        - 2 - Genetic Algorithm Punctuated Equilibrium
+        - 3 - Genetic Algorithm Unfixed Population Size
+        """
         self.__current_algorithm = algorithm_index
 
     # Метод установки имени выводного файла
@@ -816,6 +801,9 @@ class Solver:
         self.__logger_flag = 1
 
     def init_alg(self):
+        """
+        Инициализировать выбранный алгоритм
+        """
         if self.__current_algorithm == 0:
             self.genetic_algorithm = GA(data=self.data)
             self.__alg_name = "Genetic Algorithm"
@@ -865,8 +853,9 @@ class Solver:
         # print(self.__row)
 
     @time_of_work
-    # Функция поиска решений
     def solve(self):
+        """Метод поиска решений"""
+
         writer = pd.ExcelWriter(self.__output_file_name, engine='xlsxwriter')
     
         if self.__solution_for_current_project() == 0:
@@ -877,26 +866,42 @@ class Solver:
 
         writer.save()
 
-    # Метод установки количество особей для расчета в генетическом алгоритме
     def set_count_of_individuals(self, count):
+        """
+        Метод установки количество особей для расчета в генетическом алгоритме
+        """
         if count % 2 == 0:
             self.genetic_algorithm.count_of_individuals = count
         else:
             pass
 
-    # Метод установки вероятности мутации
     def set_probability_of_mutation(self, probability):
+        """
+        Метод установки вероятности мутации
+        """
         self.genetic_algorithm.probability_of_mutation = probability
 
-    # Метод установки количества поколений ГА
     def set_count_of_generations(self, count):
+        """
+        Метод установки количества поколений ГА
+        """
         self.genetic_algorithm.count_of_generations = count
 
-    # Метод установки верхней границы допустимых решений
     def set_comp_upper_limit(self, upper_limit):
+        """
+        Метод установки верхней границы допустимых решений
+        """
         self.genetic_algorithm.data.__competence_upper_limit = upper_limit
         
-    # Метод установки списка компетенций проектов
     def set_project_competence_list(self, list_input : list):
+        """
+        Метод установки списка компетенций проектов
+        """
         self.data.__project_competence_table = np.array(list_input)
-        # print(self.data.__project_competence_table)
+
+    def set_employee_competences_matrix(self):
+        """
+        Метод установки матрицы компетенций сотрудников
+        """
+        pass
+
