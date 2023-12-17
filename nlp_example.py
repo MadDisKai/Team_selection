@@ -1,13 +1,7 @@
 from nlp import NLP
 
-#print( os.path.abspath("digits.pt"))
 
-#Путь до текстового файла
-path_to_tz = "tz.txt"
-
-#Создаем объект класса NLP
-ai = NLP()
-
+solution = NLP()
 ################################################## 
 # Режимы поиска
 ##################################################
@@ -16,15 +10,21 @@ ai = NLP()
 #3 -  Назначение - Шифр
 #4 -  Состав - Область исследований
 #5 -  Технические характеристики - Области исследований
-#6 -  Среднее всех вариантов сравнения   
-mode_param = 6
+#6 -  Среднее всех вариантов сравнения
+solution.set_mode_param(1)
+
 
 #Параметр, отвечающий за количество выданных релевантных специальностей (по умолчанию = 5)
-quantity_param = 4
+solution.set_top_k(10000)
+
+
+#Решение как метод solve класса NLP
+result = solution.solve()
+
 
 #Возвращаем списки с ответами
-shifr = ai.solve(mode_param, path_to_tz, quantity_param).code_list
-score = ai.solve (mode_param, path_to_tz, quantity_param).score_list
+shifr = result.code_list
+score = result.score_list
 
 
 print(shifr)
