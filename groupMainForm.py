@@ -63,7 +63,7 @@ class MainForm:
 
         # Состояние Флага ЛОГИРОВАНИЕ РЕШЕНИЯ В КОНСОЛЬ
         self.__var_logger_flag = IntVar()
-        self.__var_logger_flag.set(0)
+        self.__var_logger_flag.set(1)
 
         # Имя файла для сохранения решения
         self.__output_file_path = StringVar()
@@ -232,11 +232,16 @@ class MainForm:
         nlp_module.set_file_path(self.__input_file_TZ_path.get())
         # Установить метод сравнения 
         nlp_module.set_mode_param(self.__COMP_selection_combobox.current() + 1)
+
+        # TODO: Отладка
+        # TODO: Добавить элемент выбора
+        nlp_module.set_top_k(4)
+
         # Запуск обработки естественного языка
         result = nlp_module.solve()
 
         # TODO: Отладка
-        print(result.code_list)
+        # print(result.code_list)
         # print(result.score_list)
 
         # ------- Часть работы генетического алгоритма -------
@@ -264,13 +269,14 @@ class MainForm:
             self.__GA_competence_upper_limit_list[self.__GA_competence_upper_limit_combobox.current()])
         
         # Передача параметров после естественной обработки языка
-        self.__GA_solver.set_project_competence_list(result.score_list)
+        self.__GA_init_data.set_project_competence_list(result.score_list)
 
         # TODO: Запуск решения генетическим алгоритмом
         # Необходимо удостовериться, что количество компетенций в расчете совпадает как у проекта 
         # так и у сотрудников
 
-        # self.__GA_solver.solve()
+        # self.__GA_solver.enable_logger()
+        self.__GA_solver.solve()
 
         # Вывод в консоль текущих парамтеров работы 
         if self.__var_logger_flag.get() == 1:

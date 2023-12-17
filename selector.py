@@ -225,6 +225,15 @@ class Data:
     def set_current_project_number(self, number):
         self.__current_project_number = number
         self.read_project_competence_from_xlsx()
+
+    def set_project_competence_list(self, list_input : list):
+        """
+        Метод установки списка компетенций проектов
+        """
+        self.__project_competence_table = np.array(list_input)
+        # print(self.data.__project_competence_table.shape)
+        # print(type(self.data.__project_competence_table))
+        # print(self.data.__project_competence_table)
     # ==================================================================================================================
 
     # Проверка, подходит ли данное решение
@@ -478,8 +487,9 @@ class GA:
                                ncols=100,
                                bar_format="%s{l_bar}{bar}{r_bar}" % Fore.GREEN):
             self.__run_generation()
-        self.print_hist()
-        self.__print_gen_info()
+    
+        # self.print_hist()
+        # self.__print_gen_info()
 
 
     # Функция печати полученных результатов в файл xlsx
@@ -893,11 +903,7 @@ class Solver:
         """
         self.genetic_algorithm.data.__competence_upper_limit = upper_limit
         
-    def set_project_competence_list(self, list_input : list):
-        """
-        Метод установки списка компетенций проектов
-        """
-        self.data.__project_competence_table = np.array(list_input)
+    
 
     def set_employee_competences_matrix(self):
         """
