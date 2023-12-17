@@ -7,6 +7,8 @@ from tkinter import ttk
 
 from tkinter.ttk import Combobox
 
+from nlp import NLP
+
 class MainForm:
     # pass
     def __init__(self):
@@ -69,6 +71,7 @@ class MainForm:
 
         # Путь к файлу с подбираемым ТЗ
         self.__input_file_TZ_path = StringVar()
+        self.__input_file_TZ_path.set("{}\\tz.txt".format(os.path.dirname(__file__)))
 
         # Переменная хранения состояния кнопки "Решить"
         self.__solve_button_state = 'normal'
@@ -223,8 +226,12 @@ class MainForm:
 
     # Событие нажатие кнопки "Решить"
     def __solve_button_push(self):
-        self.__GA_solver.set_project_competence_list([7, 2, 5, 8])
-        print(self.__GA_solver.data.get_project_competence_table())
+        nlp_module = NLP()
+
+        # nlp_module.se
+
+        # self.__GA_solver.set_project_competence_list([7, 2, 5, 8])
+        #  print(self.__GA_solver.data.get_project_competence_table())
 
         # self.__GA_solver.init_alg()
 
