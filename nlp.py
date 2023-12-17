@@ -1,52 +1,13 @@
 import os
-import re
-import json
-from bs4 import BeautifulSoup
-import pandas as pd
-from scipy.spatial.distance import cosine
-import pandas as pd
-import numpy as np
 import itertools
 import torch
 
 from sentence_transformers import SentenceTransformer, util
 model = SentenceTransformer('cointegrated/rubert-tiny2')
 
-#########################################
+#######################################
 # База поиска
-#########################################
-def list_to_tensor(embeddig_list):
-    return torch.Tensor(embeddig_list)
-
-
-def parse_text_between(file_path, start_string, end_string):
-    with open(file_path, 'r', encoding="utf-8") as file:
-        content = file.read()
-
-    start_index = content.find(start_string)
-    if start_index == -1:
-        return "Start string not found"
-
-    start_index += len(start_string)
-    end_index = content.find(end_string, start_index)
-    if end_index == -1:
-        return "End string not found"
-
-    return content[start_index:end_index].strip()
-
-
-
-
-def parse_text_after_string(file_path, target_string):
-    with open(file_path, 'r', encoding="utf-8") as file:
-        content = file.read()
-
-    target_index = content.find(target_string)
-    if target_index == -1:
-        return "Target string not found"
-
-    return content[target_index + len(target_string):].strip()
-
+#######################################
 
 #База данных числовых Шифров специальностей
 
@@ -371,7 +332,11 @@ def get_semantic_search_score(query, corpus, top_k):
         result.append(item["score"]*10)
     return result
 
+###############################################
+# Классы
+################################################
 
+#Класс, отвечающий за выделение полей ТЗ
 class Parse:
     def __init__(self, file_path):
         self.path = file_path
@@ -407,7 +372,7 @@ class Parse:
 
 
 
-
+#Класс - структура данных решения 
 class Solution_NLP:
     def __init__(self, code_list, score_list ):
         #Список для хранения шифров релевантных специальностей
@@ -419,6 +384,12 @@ class Solution_NLP:
 
 class NLP:
     def __init__(self):
+
+        self.file_path = 'tz.txt'
+
+        self.mode_param = 6
+
+        self.top_k = 5
 
         #Коды специальностей
         self.codes = codes
@@ -434,6 +405,25 @@ class NLP:
 
         #Шифр + Область исследований специальности - лист тензор-эмбеддингов
         self.code_area_emb_tensor = torch.load(os.path.abspath('code_area_emb_tensor.pt'))
+
+
+    def set_file_path(self, path):
+        self.file_path = path
+
+    def set_mode_param(self, mode_param):
+        if (mode_param>=1 and mode_param<=6):
+            self.mode_param = mode_param
+        else:
+            pass
+
+
+    def set_top_k(self, top_k):
+        if (top_k>=1):
+            self.top_k = top_k
+        else:
+            pass
+    
+
       
 ################################################## 
 # Режимы поиска
@@ -445,10 +435,10 @@ class NLP:
 #5 -  Технические характеристики - Области исследований
 #6 -  Среднее всех вариантов сравнения   
 
-    def solve(self, case_number, file_path, top_k=5):
+    def solve(self):
 
 
-        tz = Parse (file_path)
+        tz = Parse (self.file_path)
 
         tz_aim = tz.parse_text_between('Цель','Объект')
         tz_object = tz.parse_text_between('Объект', 'Содержание')
@@ -457,31 +447,31 @@ class NLP:
         tz_tech = tz.parse_text_after_string('Техниеские требования')
 
         #Режим поиска
-        match case_number:
+        match self.mode_param:
             case 1:
                 tz_aim_emb_tensor = model.encode(tz_aim,convert_to_tensor=True)
-                code_list_ = get_semantic_search_id_list(tz_aim_emb_tensor, self.formula_emb_tensor, codes, top_k)
-                score_list_ = get_semantic_search_score(tz_aim_emb_tensor, self.formula_emb_tensor, top_k)
+                code_list_ = get_semantic_search_id_list(tz_aim_emb_tensor, self.formula_emb_tensor, codes, self.top_k)
+                score_list_ = get_semantic_search_score(tz_aim_emb_tensor, self.formula_emb_tensor, self.top_k)
             
             case 2:
                 tz_object_name_tech_emb_tensor = model.encode(tz_object+'[SEP]'+tz_name+'[SEP]'+tz_tech,convert_to_tensor=True)
-                code_list_ = get_semantic_search_id_list(tz_object_name_tech_emb_tensor, self.code_area_emb_tensor, codes, top_k)
-                score_list_ = get_semantic_search_score(tz_object_name_tech_emb_tensor, self.code_area_emb_tensor, top_k)
+                code_list_ = get_semantic_search_id_list(tz_object_name_tech_emb_tensor, self.code_area_emb_tensor, codes, self.top_k)
+                score_list_ = get_semantic_search_score(tz_object_name_tech_emb_tensor, self.code_area_emb_tensor, self.top_k)
 
             case 3:
                 tz_name_emb_tensor = model.encode(tz_name,convert_to_tensor=True)
-                code_list_ = get_semantic_search_id_list(tz_name_emb_tensor, self.code_emb_tensor, codes, top_k)
-                score_list_ = get_semantic_search_score(tz_name_emb_tensor, self.code_emb_tensor, top_k)
+                code_list_ = get_semantic_search_id_list(tz_name_emb_tensor, self.code_emb_tensor, codes, self.top_k)
+                score_list_ = get_semantic_search_score(tz_name_emb_tensor, self.code_emb_tensor, self.top_k)
 
             case 4:
                 tz_cont_emb_tensor = model.encode(tz_cont,convert_to_tensor=True)
-                code_list_ = get_semantic_search_id_list(tz_cont_emb_tensor, self.area_emb_tensor, codes, top_k)
-                score_list_ = get_semantic_search_score(tz_cont_emb_tensor, self.area_emb_tensor, top_k)
+                code_list_ = get_semantic_search_id_list(tz_cont_emb_tensor, self.area_emb_tensor, codes, self.top_k)
+                score_list_ = get_semantic_search_score(tz_cont_emb_tensor, self.area_emb_tensor, self.top_k)
 
             case 5:
                 tz_tech_emb_tensor = model.encode(tz_tech,convert_to_tensor=True)
-                code_list_ = get_semantic_search_id_list(tz_tech_emb_tensor, self.area_emb_tensor, codes, top_k)
-                score_list_ = get_semantic_search_score(tz_tech_emb_tensor, self.area_emb_tensor, top_k)
+                code_list_ = get_semantic_search_id_list(tz_tech_emb_tensor, self.area_emb_tensor, codes, self.top_k)
+                score_list_ = get_semantic_search_score(tz_tech_emb_tensor, self.area_emb_tensor, self.top_k)
 
 
             case 6:
@@ -519,13 +509,13 @@ class NLP:
 
                 full_mean_score, full_codes = (list(t) for t in zip(*sorted(zip(full_mean_score, full_codes), reverse = True)))
 
-                code_list_ = full_codes[:top_k]
+                code_list_ = full_codes[:self.top_k]
 
                 score_list_ = []
                 for item in full_mean_score:
                     score_list_.append(item.tolist())
                     
-                score_list_ = score_list_[:top_k]
+                score_list_ = score_list_[:self.top_k]
 
 
         return Solution_NLP(code_list_, score_list_)
