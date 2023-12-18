@@ -241,8 +241,8 @@ class MainForm:
         result = nlp_module.solve()
 
         # TODO: Отладка
-        # print(result.code_list)
-        # print(result.score_list)
+        print(result.code_list)
+        print(result.score_list)
 
         # ------- Часть работы генетического алгоритма -------
 

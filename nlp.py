@@ -444,7 +444,7 @@ class NLP:
         tz_object = tz.parse_text_between('Объект', 'Содержание')
         tz_name = tz.parse_text_between('Название', 'Цель')
         tz_cont = tz.parse_text_between('Содержание', 'Технические требования')
-        tz_tech = tz.parse_text_after_string('Техниеские требования')
+        tz_tech = tz.parse_text_after_string('Технические требования')
 
         #Режим поиска
         match self.mode_param:

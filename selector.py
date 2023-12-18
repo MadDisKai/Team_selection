@@ -874,7 +874,7 @@ class Solver:
             self.__current_solution_series = self.__current_solution_series.rename("PROJECT")
             self.__write_solution_to_excel(writer)
 
-        writer.save()
+        writer.close()
 
     def set_count_of_individuals(self, count):
         """
