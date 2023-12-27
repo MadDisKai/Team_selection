@@ -1,13 +1,12 @@
-import selector
-import os
-import numpy as np
+from src.genetic_algorithm.selector import Data
+from src.genetic_algorithm.selector import Solver
+from src.natural_processing.nlp     import NLP
 
-from tkinter import *
-from tkinter import ttk
-
+from tkinter     import *
+from tkinter     import ttk
 from tkinter.ttk import Combobox
 
-from nlp import NLP
+import os
 
 class MainForm:
     # pass
@@ -53,10 +52,10 @@ class MainForm:
         self.__GA_count_of_individuals_list = [2*i for i in range(25, 100)]
 
         # Сущность исходных данных Генетических алгоритмов
-        self.__GA_init_data = selector.Data()
+        self.__GA_init_data = Data()
 
         # Сущность решателя Генетически алгоритмом
-        self.__GA_solver = selector.Solver(data = self.__GA_init_data)
+        self.__GA_solver = Solver(data = self.__GA_init_data)
 
         # Главное окно
         self.mainWindow = Tk()
@@ -71,7 +70,8 @@ class MainForm:
 
         # Путь к файлу с подбираемым ТЗ
         self.__input_file_TZ_path = StringVar()
-        self.__input_file_TZ_path.set("{}\\tz.txt".format(os.path.dirname(__file__)))
+        self.__input_file_TZ_path.set(".\docs\\nlp_files\\tz.txt".format(os.path.dirname(__file__)))
+        # self.__input_file_TZ_path.set(".\docs\\nlp_files\\tz.txt".format(os.path.dirname(__file__)))
 
         # Переменная хранения состояния кнопки "Решить"
         self.__solve_button_state = 'normal'
@@ -299,7 +299,7 @@ class MainForm:
 Количество поколений решения                 {self.__GA_generation_count_combobox.get()}
 Количество особей генетического алгоритма    {self.__GA_count_of_individuals_combobox.get()}
 Вероятность мутации особей                   {self.__GA_probability_of_mutation_combobox.get()}
-Верхняя допустимая границйа решения          {self.__GA_competence_upper_limit_combobox.get()}
+Верхняя допустимая граница решения           {self.__GA_competence_upper_limit_combobox.get()}
 
 """)
  

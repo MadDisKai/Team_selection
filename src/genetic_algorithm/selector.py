@@ -1,13 +1,13 @@
 import math
-import numpy as np
 import random
+import numpy  as np
 import pandas as pd
 
-from tqdm import tqdm
+from tqdm     import tqdm
+from time     import gmtime
+from time     import strftime
 from tabulate import tabulate
-from time import gmtime, strftime
 from colorama import Fore
-
 
 def time_of_work(func):
     import time
@@ -88,19 +88,9 @@ class Data:
         self.__competence_lower_limit = 0
 
         # Путь до таблицы хранения компетенций сотрудников XLSX
-        self.__employee_competence_table_path = 'employee_competence_table.xlsx'
-
-        # Путь до таблицы хранения уровней компетенции проектов
-        self.__project_competence_table_path = 'project_competence_table.xlsx'
-
-        # Путь до таблицы хранения ставок работников
-        # self.__employee_rate = 'employee_rate.xlsx'
-
-        # Номер текущего проекта
-        # self.__current_project_number = 0
+        self.__employee_competence_table_path = './docs/genetic_algorithm_files/employee_competence_table.xlsx'
 
         # Количество проектов
-
         self.__project_count = 0
 
         self.read_employee_competence_from_xlsx()
@@ -129,30 +119,6 @@ class Data:
         self.__employee_competence_table = table.copy().transpose().to_numpy()
         self.__competence_names = table.copy().columns.to_list()
         self.__employee_names = table.copy().index.to_list()
-
-    # Функция чтения данных о компетенциях сотрудников [ПЕРЕПИСАТЬ ПОСЛЕДНЮЮ СТРОКУ]
-    # def read_project_competence_from_xlsx(self):
-    #     # print('Reading project competences from {}'.format(self.__project_competence_table_path))
-    #     table = pd.read_excel(self.__project_competence_table_path, index_col=0)
-    #     self.__project_count = \
-    #         table.shape[0]
-    #     self.__project_competence_table = table.copy().to_numpy()[self.__current_project_number]
-    #     # print(self.__project_competence_table)
-
-    # Функция чтения значений ставок сотрудников
-    # def read_employee_rate_from_xlsx(self):
-    #     # print('Reading employee rate from {}'.format(self.__employee_rate))
-    #     table = pd.read_excel(self.__employee_rate, index_col=0)
-    #     self.__employee_rate_table = table.transpose().copy().to_numpy()[0]
-    #     # print(self.__employee_rate_table)
-
-    # Функция вывода таблицы уровней компетенции всех сотрудников
-    # def print_employee_competence_table(self):
-    #     print("EMPLOYEE COMPETENCES TABLE:\n", self.__employee_competence_table)
-
-    # Функция вывода таблицы необходимых компетенций проектов
-    # def print_project_competence_table(self):
-    #     print("PROJECT COMPETENCES TABLE:\n", self.__project_competence_table)
 
     # Функция вывода имен сотрудников
     def print_employee_names(self):
@@ -887,7 +853,7 @@ class Solver:
 
     def set_probability_of_mutation(self, probability):
         """
-        Метод установки вероятности мутации
+        Метод установки вероятности мутации:
         """
         self.genetic_algorithm.probability_of_mutation = probability
 
@@ -903,8 +869,6 @@ class Solver:
         """
         self.genetic_algorithm.data.__competence_upper_limit = upper_limit
         
-    
-
     def set_employee_competences_matrix(self):
         """
         Метод установки матрицы компетенций сотрудников

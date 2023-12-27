@@ -12,7 +12,7 @@ model = SentenceTransformer('cointegrated/rubert-tiny2')
 #База данных числовых Шифров специальностей
 
 #Работает в гугл колабе, на локальной машине - выдает ошибку
-#codes = torch.load(os.path.abspath("digits.pt"))
+#codes = torch.load(os.path.abspath("./docs/nlp_files/digits.pt"))
 codes = ['01.01.01',
  '01.01.02',
  '01.01.07',
@@ -385,7 +385,7 @@ class Solution_NLP:
 class NLP:
     def __init__(self):
 
-        self.file_path = 'tz.txt'
+        self.file_path = './docs/nlp_files/tz.txt'
 
         self.mode_param = 6
 
@@ -395,16 +395,16 @@ class NLP:
         self.codes = codes
 
         #Шифр специальности - лист тензор-эмбеддинглв
-        self.code_emb_tensor = torch.load(os.path.abspath('code_emb_tensor.pt'))
+        self.code_emb_tensor = torch.load(os.path.abspath('./docs/nlp_files/code_emb_tensor.pt'))
 
         #Формула специальности - лист тензор-эмбеддингов
-        self.formula_emb_tensor = torch.load(os.path.abspath('formula_emb_tensor.pt'))
+        self.formula_emb_tensor = torch.load(os.path.abspath('./docs/nlp_files/formula_emb_tensor.pt'))
 
         #Область исследований специальности - лист тензор-эмбеддингов
-        self.area_emb_tensor = torch.load(os.path.abspath('area_emb_tensor.pt'))
+        self.area_emb_tensor = torch.load(os.path.abspath('./docs/nlp_files/area_emb_tensor.pt'))
 
         #Шифр + Область исследований специальности - лист тензор-эмбеддингов
-        self.code_area_emb_tensor = torch.load(os.path.abspath('code_area_emb_tensor.pt'))
+        self.code_area_emb_tensor = torch.load(os.path.abspath('./docs/nlp_files/code_area_emb_tensor.pt'))
 
 
     def set_file_path(self, path):
