@@ -6,7 +6,8 @@ from tkinter     import *
 from tkinter     import ttk
 from tkinter.ttk import Combobox
 
-import os
+from docs.config import OUTPUT_FILE_DIR_PATH
+from docs.config import TZ_FILE_DIR_PATH
 
 class MainForm:
     # pass
@@ -66,11 +67,11 @@ class MainForm:
 
         # Имя файла для сохранения решения
         self.__output_file_path = StringVar()
-        self.__output_file_path.set("{}\Output.xlsx".format(os.path.dirname(__file__)))
+        self.__output_file_path.set(OUTPUT_FILE_DIR_PATH)
 
         # Путь к файлу с подбираемым ТЗ
         self.__input_file_TZ_path = StringVar()
-        self.__input_file_TZ_path.set(".\docs\\nlp_files\\tz.txt".format(os.path.dirname(__file__)))
+        self.__input_file_TZ_path.set(TZ_FILE_DIR_PATH)
         # self.__input_file_TZ_path.set(".\docs\\nlp_files\\tz.txt".format(os.path.dirname(__file__)))
 
         # Переменная хранения состояния кнопки "Решить"
@@ -265,7 +266,7 @@ class MainForm:
         self.__GA_solver.set_probability_of_mutation(
             self.__GA_probability_of_mutation_list[self.__GA_probability_of_mutation_combobox.current()])
         # Установить верхнюю допустимую границу решения
-        self.__GA_solver.set_comp_upper_limit(
+        self.__GA_init_data.set_comp_upper_limit(
             self.__GA_competence_upper_limit_list[self.__GA_competence_upper_limit_combobox.current()])
         
         # Передача параметров после естественной обработки языка

@@ -202,6 +202,12 @@ class Data:
         # print(self.data.__project_competence_table)
     # ==================================================================================================================
 
+    def set_comp_upper_limit(self, upper_limit):
+        """
+        Метод установки верхней границы допустимых решений
+        """
+        self.__competence_upper_limit = upper_limit
+
     # Проверка, подходит ли данное решение
     def is_relevant_solution(self, bin_array):
 
@@ -863,15 +869,6 @@ class Solver:
         """
         self.genetic_algorithm.count_of_generations = count
 
-    def set_comp_upper_limit(self, upper_limit):
-        """
-        Метод установки верхней границы допустимых решений
-        """
-        self.genetic_algorithm.data.__competence_upper_limit = upper_limit
         
-    def set_employee_competences_matrix(self):
-        """
-        Метод установки матрицы компетенций сотрудников
-        """
-        pass
+
 

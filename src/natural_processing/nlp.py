@@ -3,6 +3,13 @@ import itertools
 import torch
 
 from sentence_transformers import SentenceTransformer, util
+
+from docs.config import TZ_FILE_DIR_PATH
+from docs.config import CODE_EMB_TENSOR_DIR_PATH
+from docs.config import FORMULA_EMB_TENSOR_DIR_PATH
+from docs.config import AREA_EMB_TENSOR_DIR_PATH
+from docs.config import CODE_AREA_EMB_TENSOR_DIR_PATH
+
 model = SentenceTransformer('cointegrated/rubert-tiny2')
 
 #######################################
@@ -385,7 +392,7 @@ class Solution_NLP:
 class NLP:
     def __init__(self):
 
-        self.file_path = './docs/nlp_files/tz.txt'
+        self.file_path = TZ_FILE_DIR_PATH
 
         self.mode_param = 6
 
@@ -395,16 +402,16 @@ class NLP:
         self.codes = codes
 
         #Шифр специальности - лист тензор-эмбеддинглв
-        self.code_emb_tensor = torch.load(os.path.abspath('./docs/nlp_files/code_emb_tensor.pt'))
+        self.code_emb_tensor = torch.load(os.path.abspath(CODE_EMB_TENSOR_DIR_PATH))
 
         #Формула специальности - лист тензор-эмбеддингов
-        self.formula_emb_tensor = torch.load(os.path.abspath('./docs/nlp_files/formula_emb_tensor.pt'))
+        self.formula_emb_tensor = torch.load(os.path.abspath(FORMULA_EMB_TENSOR_DIR_PATH))
 
         #Область исследований специальности - лист тензор-эмбеддингов
-        self.area_emb_tensor = torch.load(os.path.abspath('./docs/nlp_files/area_emb_tensor.pt'))
+        self.area_emb_tensor = torch.load(os.path.abspath(AREA_EMB_TENSOR_DIR_PATH))
 
         #Шифр + Область исследований специальности - лист тензор-эмбеддингов
-        self.code_area_emb_tensor = torch.load(os.path.abspath('./docs/nlp_files/code_area_emb_tensor.pt'))
+        self.code_area_emb_tensor = torch.load(os.path.abspath(CODE_AREA_EMB_TENSOR_DIR_PATH))
 
 
     def set_file_path(self, path):
