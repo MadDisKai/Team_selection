@@ -8,7 +8,7 @@
             "name": "Python: Запуск приложения подбора",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/__main__.py",
+            "program": "__main__.py",
             "console": "integratedTerminal",
             "justMyCode": true
         }
