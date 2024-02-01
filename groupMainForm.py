@@ -68,6 +68,7 @@ class MainForm:
 
         # Путь к файлу с подбираемым ТЗ
         self.__input_file_TZ_path = StringVar()
+        self.__output_file_path.set("{}/tz.txt".format(os.path.dirname(__file__)))
 
         # Переменная хранения состояния кнопки "Решить"
         self.__solve_button_state = 'normal'
