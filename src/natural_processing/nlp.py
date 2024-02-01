@@ -11,6 +11,7 @@ from docs.config import AREA_EMB_TENSOR_DIR_PATH
 from docs.config import CODE_AREA_EMB_TENSOR_DIR_PATH
 
 model = SentenceTransformer('cointegrated/rubert-tiny2')
+model = model.to("cpu")
 
 #######################################
 # База поиска
